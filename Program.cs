@@ -2,13 +2,12 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Si el entorno de ejecucion fija el puerto por variable de entorno (PORT), respetarlo
-// en vez del puerto fijo de launchSettings.json.
+// Puerto fijo (5203) para que coincida siempre con proxy.conf.json del front,
+// sin depender de que se respete el launch profile. Si el entorno de ejecucion
+// fija PORT (por ejemplo en un hosting como Render), se usa ese en su lugar.
 var portEnv = Environment.GetEnvironmentVariable("PORT");
-if (!string.IsNullOrEmpty(portEnv))
-{
-    builder.WebHost.UseUrls($"http://0.0.0.0:{portEnv}");
-}
+var port = string.IsNullOrEmpty(portEnv) ? "5203" : portEnv;
+builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
