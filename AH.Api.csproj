@@ -12,7 +12,17 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
+    <PackageReference Include="BCrypt.Net-Next" Version="4.0.2" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+  </ItemGroup>
+
+  <!-- El proyecto de tests vive dentro de esta carpeta, así que hay que sacarlo del glob
+       **/*.cs del API; si no, sus archivos se compilan también acá y no encuentran xunit. -->
+  <ItemGroup>
+    <Compile Remove="AH.Tests/**" />
+    <Content Remove="AH.Tests/**" />
+    <None Remove="AH.Tests/**" />
+    <EmbeddedResource Remove="AH.Tests/**" />
   </ItemGroup>
 
 </Project>

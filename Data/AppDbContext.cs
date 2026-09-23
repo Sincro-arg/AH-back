@@ -1,12 +1,20 @@
 using Microsoft.EntityFrameworkCore;
+using AH.Api.Models;
 
 namespace AH.Api.Data;
 
-// Contexto vacio: las entidades reales (usuarios, etc.) se agregan en la tarea 2,
-// cuando /api/auth pasa a usar base de datos en vez de la lista en memoria.
 public class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
+    }
+
+    public DbSet<Usuario> Usuarios => Set<Usuario>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Usuario>()
+            .HasIndex(u => u.Email)
+            .IsUnique();
     }
 }
