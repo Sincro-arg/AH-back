@@ -122,6 +122,30 @@ public class UsuariosController : ControllerBase
         return Ok(new { mensaje = "Contraseña actualizada" });
     }
 
+    public record UpdateTemaDto(string Tema);
+
+    [HttpPut("me/tema")]
+    public async Task<IActionResult> UpdateTema([FromBody] UpdateTemaDto dto)
+    {
+        var idClaim = User.FindFirstValue(JwtRegisteredClaimNames.Sub)
+            ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (idClaim == null || !Guid.TryParse(idClaim, out var id))
+            return Unauthorized(new { error = "Token inválido" });
+
+        var usuario = await _context.Usuarios.FindAsync(id);
+        if (usuario == null)
+            return Unauthorized(new { error = "Token inválido" });
+
+        if (dto == null || (dto.Tema != "claro" && dto.Tema != "oscuro"))
+            return BadRequest(new { error = "El tema debe ser 'claro' u 'oscuro'" });
+
+        usuario.Tema = dto.Tema;
+        await _context.SaveChangesAsync();
+
+        return Ok(new { tema = usuario.Tema });
+    }
+
     private static bool EsEmailValido(string? email)
     {
         if (string.IsNullOrWhiteSpace(email))
