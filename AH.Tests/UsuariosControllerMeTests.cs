@@ -37,6 +37,21 @@ public class UsuariosControllerMeTests
         return usuario;
     }
 
+    private static Usuario SeedUsuarioConPassword(AppDbContext db, string email, string password)
+    {
+        var usuario = new Usuario
+        {
+            Nombre = "Juan",
+            Apellido = "Perez",
+            Email = email,
+            Telefono = "1122334455",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
+        };
+        db.Usuarios.Add(usuario);
+        db.SaveChanges();
+        return usuario;
+    }
+
     private static void AutenticarComo(UsuariosController ctrl, Guid userId)
     {
         var claims = new[] { new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()) };
@@ -131,5 +146,57 @@ public class UsuariosControllerMeTests
         var bEnDb = await db.Usuarios.FindAsync(usuarioB.Id);
         Assert.Equal("Juan", bEnDb!.Nombre);
         Assert.Equal("b@example.com", bEnDb.Email);
+    }
+
+    [Fact]
+    public async Task UpdatePassword_ConPasswordActualCorrecta_ActualizaElHash()
+    {
+        var (ctrl, db) = Build();
+        var usuario = SeedUsuarioConPassword(db, "a@example.com", "claveVieja1");
+        AutenticarComo(ctrl, usuario.Id);
+
+        var dto = new UsuariosController.UpdatePasswordDto("claveVieja1", "claveNueva1");
+        var res = await ctrl.UpdatePassword(dto);
+
+        var ok = Assert.IsType<OkObjectResult>(res);
+        Assert.Equal("Contraseña actualizada", GetProp(ok.Value!, "mensaje"));
+
+        var enDb = await db.Usuarios.FindAsync(usuario.Id);
+        Assert.True(BCrypt.Net.BCrypt.Verify("claveNueva1", enDb!.PasswordHash));
+        Assert.False(BCrypt.Net.BCrypt.Verify("claveVieja1", enDb.PasswordHash));
+    }
+
+    [Fact]
+    public async Task UpdatePassword_ConPasswordActualIncorrecta_Devuelve400()
+    {
+        var (ctrl, db) = Build();
+        var usuario = SeedUsuarioConPassword(db, "a@example.com", "claveVieja1");
+        AutenticarComo(ctrl, usuario.Id);
+
+        var dto = new UsuariosController.UpdatePasswordDto("claveEquivocada", "claveNueva1");
+        var res = await ctrl.UpdatePassword(dto);
+
+        var badRequest = Assert.IsType<BadRequestObjectResult>(res);
+        Assert.Equal("La contraseña actual no es correcta", GetProp(badRequest.Value!, "error"));
+
+        var enDb = await db.Usuarios.FindAsync(usuario.Id);
+        Assert.True(BCrypt.Net.BCrypt.Verify("claveVieja1", enDb!.PasswordHash));
+    }
+
+    [Fact]
+    public async Task UpdatePassword_ConNuevaPasswordCorta_Devuelve400()
+    {
+        var (ctrl, db) = Build();
+        var usuario = SeedUsuarioConPassword(db, "a@example.com", "claveVieja1");
+        AutenticarComo(ctrl, usuario.Id);
+
+        var dto = new UsuariosController.UpdatePasswordDto("claveVieja1", "corta1");
+        var res = await ctrl.UpdatePassword(dto);
+
+        var badRequest = Assert.IsType<BadRequestObjectResult>(res);
+        Assert.Equal("La nueva contraseña debe tener al menos 8 caracteres", GetProp(badRequest.Value!, "error"));
+
+        var enDb = await db.Usuarios.FindAsync(usuario.Id);
+        Assert.True(BCrypt.Net.BCrypt.Verify("claveVieja1", enDb!.PasswordHash));
     }
 }

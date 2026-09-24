@@ -95,6 +95,33 @@ public class UsuariosController : ControllerBase
         });
     }
 
+    public record UpdatePasswordDto(string PasswordActual, string PasswordNueva);
+
+    [HttpPut("me/password")]
+    public async Task<IActionResult> UpdatePassword([FromBody] UpdatePasswordDto dto)
+    {
+        var idClaim = User.FindFirstValue(JwtRegisteredClaimNames.Sub)
+            ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (idClaim == null || !Guid.TryParse(idClaim, out var id))
+            return Unauthorized(new { error = "Token inválido" });
+
+        var usuario = await _context.Usuarios.FindAsync(id);
+        if (usuario == null)
+            return Unauthorized(new { error = "Token inválido" });
+
+        if (dto == null || !BCrypt.Net.BCrypt.Verify(dto.PasswordActual, usuario.PasswordHash))
+            return BadRequest(new { error = "La contraseña actual no es correcta" });
+
+        if (string.IsNullOrWhiteSpace(dto.PasswordNueva) || dto.PasswordNueva.Length < 8)
+            return BadRequest(new { error = "La nueva contraseña debe tener al menos 8 caracteres" });
+
+        usuario.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.PasswordNueva);
+        await _context.SaveChangesAsync();
+
+        return Ok(new { mensaje = "Contraseña actualizada" });
+    }
+
     private static bool EsEmailValido(string? email)
     {
         if (string.IsNullOrWhiteSpace(email))
