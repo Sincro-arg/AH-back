@@ -2,6 +2,7 @@ using AH.Api.Controllers;
 using AH.Api.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Xunit;
 
 namespace AH.Tests;
@@ -14,7 +15,16 @@ public class AuthControllerRegisterTests
             .UseInMemoryDatabase($"register-{Guid.NewGuid()}")
             .Options;
         var db = new AppDbContext(options);
-        var ctrl = new AuthController(db);
+        var config = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Jwt:Key"] = "clave-de-test-super-larga-para-firmar-1234567890",
+                ["Jwt:Issuer"] = "AH.Api.Test",
+                ["Jwt:Audience"] = "AH.App.Test",
+                ["Jwt:ExpireHours"] = "8",
+            })
+            .Build();
+        var ctrl = new AuthController(db, config);
         return (ctrl, db);
     }
 

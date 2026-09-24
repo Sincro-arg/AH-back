@@ -2,6 +2,11 @@ using AH.Api.Data;
 using AH.Api.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace AH.Api.Controllers;
 
@@ -10,10 +15,12 @@ namespace AH.Api.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly AppDbContext _context;
+    private readonly IConfiguration _config;
 
-    public AuthController(AppDbContext context)
+    public AuthController(AppDbContext context, IConfiguration config)
     {
         _context = context;
+        _config = config;
     }
 
     public record DemoUsuarioDto(string Id, string Nombre, string Apellido, string Email);
@@ -68,6 +75,65 @@ public class AuthController : ControllerBase
         await _context.SaveChangesAsync();
 
         return Ok(new { mensaje = "Usuario registrado correctamente" });
+    }
+
+    public record LoginDto(string Email, string Password);
+
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] LoginDto dto)
+    {
+        if (dto == null || string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Password))
+            return Unauthorized(new { error = "Email o contraseña incorrectos" });
+
+        var emailNorm = dto.Email.Trim().ToLower();
+        var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Email == emailNorm);
+
+        if (usuario == null || !BCrypt.Net.BCrypt.Verify(dto.Password, usuario.PasswordHash))
+            return Unauthorized(new { error = "Email o contraseña incorrectos" });
+
+        var token = GenerateToken(usuario);
+
+        return Ok(new
+        {
+            token,
+            usuario = new
+            {
+                id = usuario.Id.ToString(),
+                nombre = usuario.Nombre,
+                apellido = usuario.Apellido,
+                email = usuario.Email,
+                telefono = usuario.Telefono,
+                tema = usuario.Tema,
+                fechaAlta = usuario.FechaAlta.ToString("o"),
+            },
+        });
+    }
+
+    private string GenerateToken(Usuario usuario)
+    {
+        var jwtKey = _config["Jwt:Key"] ?? throw new InvalidOperationException("Jwt:Key no configurado");
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var claims = new[]
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, usuario.Id.ToString()),
+            new Claim(JwtRegisteredClaimNames.Email, usuario.Email),
+            new Claim("nombre", usuario.Nombre),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+        };
+
+        var expireHours = int.TryParse(_config["Jwt:ExpireHours"], out var h) ? h : 8;
+
+        var token = new JwtSecurityToken(
+            issuer: _config["Jwt:Issuer"],
+            audience: _config["Jwt:Audience"],
+            claims: claims,
+            expires: DateTime.UtcNow.AddHours(expireHours),
+            signingCredentials: creds
+        );
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
     private static bool EsEmailValido(string? email)
