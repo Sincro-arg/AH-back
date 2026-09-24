@@ -90,4 +90,20 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+// Siembra el usuario de prueba del pliego (admin@cuentas.com). Va en try/catch
+// porque no tiene que tumbar el arranque si la base todavia no esta migrada
+// o no esta disponible en ese momento.
+using (var scope = app.Services.CreateScope())
+{
+    try
+    {
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        DbSeeder.SeedAdminUsuario(db);
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogWarning(ex, "No se pudo sembrar el usuario de prueba admin@cuentas.com");
+    }
+}
+
 app.Run();
