@@ -199,4 +199,53 @@ public class UsuariosControllerMeTests
         var enDb = await db.Usuarios.FindAsync(usuario.Id);
         Assert.True(BCrypt.Net.BCrypt.Verify("claveVieja1", enDb!.PasswordHash));
     }
+
+    [Fact]
+    public async Task UpdateTema_ConValorValido_ActualizaYDevuelveElTema()
+    {
+        var (ctrl, db) = Build();
+        var usuario = SeedUsuario(db, "a@example.com");
+        AutenticarComo(ctrl, usuario.Id);
+
+        var dto = new UsuariosController.UpdateTemaDto("oscuro");
+        var res = await ctrl.UpdateTema(dto);
+
+        var ok = Assert.IsType<OkObjectResult>(res);
+        Assert.Equal("oscuro", GetProp(ok.Value!, "tema"));
+
+        var enDb = await db.Usuarios.FindAsync(usuario.Id);
+        Assert.Equal("oscuro", enDb!.Tema);
+    }
+
+    [Fact]
+    public async Task UpdateTema_ConValorInvalido_Devuelve400()
+    {
+        var (ctrl, db) = Build();
+        var usuario = SeedUsuario(db, "a@example.com");
+        AutenticarComo(ctrl, usuario.Id);
+
+        var dto = new UsuariosController.UpdateTemaDto("azul");
+        var res = await ctrl.UpdateTema(dto);
+
+        var badRequest = Assert.IsType<BadRequestObjectResult>(res);
+        Assert.Equal("El tema debe ser 'claro' u 'oscuro'", GetProp(badRequest.Value!, "error"));
+
+        var enDb = await db.Usuarios.FindAsync(usuario.Id);
+        Assert.Equal("claro", enDb!.Tema);
+    }
+
+    [Fact]
+    public async Task UpdateTema_SinToken_Devuelve401()
+    {
+        var (ctrl, _) = Build();
+        ctrl.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext(),
+        };
+
+        var res = await ctrl.UpdateTema(new UsuariosController.UpdateTemaDto("oscuro"));
+
+        var unauthorized = Assert.IsType<UnauthorizedObjectResult>(res);
+        Assert.Equal("Token inválido", GetProp(unauthorized.Value!, "error"));
+    }
 }
