@@ -1,3 +1,5 @@
+using AH.Api.Data;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,6 +10,25 @@ var builder = WebApplication.CreateBuilder(args);
 var portEnv = Environment.GetEnvironmentVariable("PORT");
 var port = string.IsNullOrEmpty(portEnv) ? "5203" : portEnv;
 builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+
+// La cadena viene de configuracion (appsettings) o de la variable de entorno
+// ConnectionStrings__DefaultConnection en produccion. Se normaliza el pooling acá
+// porque contra el pooler de Supabase (puerto 6543) cada conexion nueva reautentica:
+// sin pool, cada request abre y autentica de cero.
+var dbConnStr = builder.Configuration.GetConnectionString("DefaultConnection");
+if (!string.IsNullOrWhiteSpace(dbConnStr))
+{
+    var csb = new Npgsql.NpgsqlConnectionStringBuilder(dbConnStr)
+    {
+        Pooling = true,
+        MinPoolSize = 0,
+        MaxPoolSize = 20,
+        NoResetOnClose = true,
+    };
+    dbConnStr = csb.ConnectionString;
+}
+
+builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(dbConnStr));
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
