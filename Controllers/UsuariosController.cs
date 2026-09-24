@@ -1,6 +1,7 @@
 using AH.Api.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
@@ -41,5 +42,71 @@ public class UsuariosController : ControllerBase
             tema = usuario.Tema,
             fechaAlta = usuario.FechaAlta.ToString("o"),
         });
+    }
+
+    public record UpdateMeDto(string Nombre, string Apellido, string Telefono, string Email);
+
+    [HttpPut("me")]
+    public async Task<IActionResult> UpdateMe([FromBody] UpdateMeDto dto)
+    {
+        var idClaim = User.FindFirstValue(JwtRegisteredClaimNames.Sub)
+            ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (idClaim == null || !Guid.TryParse(idClaim, out var id))
+            return Unauthorized(new { error = "Token inválido" });
+
+        var usuario = await _context.Usuarios.FindAsync(id);
+        if (usuario == null)
+            return Unauthorized(new { error = "Token inválido" });
+
+        if (dto == null)
+            return BadRequest(new { error = "Datos inválidos" });
+
+        if (string.IsNullOrWhiteSpace(dto.Nombre))
+            return BadRequest(new { error = "El nombre es requerido" });
+
+        if (string.IsNullOrWhiteSpace(dto.Apellido))
+            return BadRequest(new { error = "El apellido es requerido" });
+
+        if (!EsEmailValido(dto.Email))
+            return BadRequest(new { error = "El email no tiene un formato válido" });
+
+        var emailNorm = dto.Email.Trim().ToLower();
+
+        if (await _context.Usuarios.AnyAsync(u => u.Email == emailNorm && u.Id != id))
+            return Conflict(new { error = "El email ya esta registrado" });
+
+        usuario.Nombre = dto.Nombre.Trim();
+        usuario.Apellido = dto.Apellido.Trim();
+        usuario.Telefono = dto.Telefono?.Trim() ?? string.Empty;
+        usuario.Email = emailNorm;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new
+        {
+            id = usuario.Id.ToString(),
+            nombre = usuario.Nombre,
+            apellido = usuario.Apellido,
+            email = usuario.Email,
+            telefono = usuario.Telefono,
+            tema = usuario.Tema,
+            fechaAlta = usuario.FechaAlta.ToString("o"),
+        });
+    }
+
+    private static bool EsEmailValido(string? email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return false;
+        try
+        {
+            var addr = new System.Net.Mail.MailAddress(email.Trim());
+            return addr.Address == email.Trim();
+        }
+        catch
+        {
+            return false;
+        }
     }
 }

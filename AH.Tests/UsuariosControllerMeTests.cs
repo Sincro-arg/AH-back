@@ -81,4 +81,55 @@ public class UsuariosControllerMeTests
         Assert.NotEqual(usuarioB.Id.ToString(), GetProp(ok.Value!, "id"));
         Assert.NotEqual(usuarioB.Email, GetProp(ok.Value!, "email"));
     }
+
+    [Fact]
+    public async Task PutMe_ConDatosValidos_ActualizaYDevuelveLosNuevosDatos()
+    {
+        var (ctrl, db) = Build();
+        var usuario = SeedUsuario(db, "original@example.com");
+        AutenticarComo(ctrl, usuario.Id);
+
+        var dto = new UsuariosController.UpdateMeDto("Nuevo", "Apellido", "5599887766", "nuevo@example.com");
+        var res = await ctrl.UpdateMe(dto);
+
+        var ok = Assert.IsType<OkObjectResult>(res);
+        Assert.Equal("Nuevo", GetProp(ok.Value!, "nombre"));
+        Assert.Equal("Apellido", GetProp(ok.Value!, "apellido"));
+        Assert.Equal("nuevo@example.com", GetProp(ok.Value!, "email"));
+        Assert.Equal("5599887766", GetProp(ok.Value!, "telefono"));
+
+        var enDb = await db.Usuarios.FindAsync(usuario.Id);
+        Assert.Equal("nuevo@example.com", enDb!.Email);
+    }
+
+    [Fact]
+    public async Task PutMe_ConEmailDeOtroUsuario_Devuelve409()
+    {
+        var (ctrl, db) = Build();
+        var usuarioA = SeedUsuario(db, "a@example.com");
+        var usuarioB = SeedUsuario(db, "b@example.com");
+        AutenticarComo(ctrl, usuarioA.Id);
+
+        var dto = new UsuariosController.UpdateMeDto("Juan", "Perez", "1122334455", usuarioB.Email);
+        var res = await ctrl.UpdateMe(dto);
+
+        var conflict = Assert.IsType<ConflictObjectResult>(res);
+        Assert.Equal("El email ya esta registrado", GetProp(conflict.Value!, "error"));
+    }
+
+    [Fact]
+    public async Task PutMe_NoPuedeEditarDatosDeOtroUsuario()
+    {
+        var (ctrl, db) = Build();
+        var usuarioA = SeedUsuario(db, "a@example.com");
+        var usuarioB = SeedUsuario(db, "b@example.com");
+        AutenticarComo(ctrl, usuarioA.Id);
+
+        var dto = new UsuariosController.UpdateMeDto("Hackeado", "Hackeado", "0000000000", "a@example.com");
+        await ctrl.UpdateMe(dto);
+
+        var bEnDb = await db.Usuarios.FindAsync(usuarioB.Id);
+        Assert.Equal("Juan", bEnDb!.Nombre);
+        Assert.Equal("b@example.com", bEnDb.Email);
+    }
 }
