@@ -12,29 +12,19 @@ namespace AH.Tests;
 // registro, login, admin sembrado, ver/editar perfil, cambiar password, cambiar
 // tema y volver a entrar con la password nueva.
 //
-// TODAVIA NO SE PUDO CORRER: este repo no tiene un .sln, y AH.Api.csproj vive
-// en la raiz junto con la carpeta AH.Tests. Un "dotnet test" sin argumentos
-// desde la raiz (que es como lo dispara la tarea "test") toma directamente
-// AH.Api.csproj -que no tiene tests- y termina en éxito trivial sin haber
-// corrido ni un solo test de este proyecto ni del resto de AH.Tests. Agregar
-// un .sln en la raiz tampoco alcanza: ahi "dotnet test" pasa a fallar por
-// ambiguedad (mas de un .csproj/.sln en el mismo directorio). Para poder
-// correr esto (y el resto de AH.Tests) hace falta reordenar el proyecto -por
-// ejemplo, mover AH.Api a su propia carpeta como ya esta AH.Tests- lo cual
-// puede afectar el build/start command configurado en Render y no correspondia
-// decidirlo en esta tarea. Quede con Skip para no crear usuarios de prueba en
-// la base de produccion en cada corrida una vez que se resuelva el wiring.
+// AH.Api ahora vive en su propia carpeta (AH.Api/) y hay un AH.sln en la raiz
+// que referencia AH.Api y AH.Tests, asi que "dotnet test" desde la raiz ya
+// encuentra y corre este proyecto sin ambiguedad.
 public class RealDeploymentE2ETests
 {
-    private const string BaseUrl = "https://ah-back.onrender.com/api";
-    private const string SkipReason = "No se pudo correr: ver comentario de la clase (falta wiring de .sln en AH-back).";
+    private const string BaseUrl = "https://ah-back.onrender.com/api/";
 
     private static HttpClient CrearCliente() => new() { BaseAddress = new Uri(BaseUrl) };
 
     private static async Task<JsonElement> Body(HttpResponseMessage res) =>
         (await res.Content.ReadFromJsonAsync<JsonElement>());
 
-    [Fact(Skip = SkipReason)]
+    [Fact]
     public async Task FlujoCompleto_RegistroLoginPerfilPasswordTemaYAdminSembrado()
     {
         using var http = CrearCliente();
