@@ -117,6 +117,45 @@ public class PozosEstadoYRepartoTests
         Assert.IsType<BadRequestObjectResult>(res);
     }
 
+    [Fact]
+    public async Task MarcarVendido_SinPrecioNiFecha_Devuelve400()
+    {
+        var (ctrl, db) = Build();
+        var pozo = SeedPozo(db, estado: "Comprado");
+        pozo.PrecioCompra = 2000000m;
+        pozo.FechaCompra = new DateTime(2026, 1, 10);
+        db.SaveChanges();
+
+        var dto = new PozosController.CambiarEstadoDto("marcarVendido", null, null, null, null);
+        var res = await ctrl.CambiarEstado(pozo.Id, dto);
+
+        Assert.IsType<BadRequestObjectResult>(res);
+    }
+
+    [Fact]
+    public async Task MarcarVendido_PozoNoComprado_Devuelve409()
+    {
+        var (ctrl, db) = Build();
+        var pozo = SeedPozo(db, estado: "Abierto");
+
+        var dto = new PozosController.CambiarEstadoDto("marcarVendido", null, null, 2600000m, new DateTime(2026, 3, 5));
+        var res = await ctrl.CambiarEstado(pozo.Id, dto);
+
+        Assert.IsType<ConflictObjectResult>(res);
+    }
+
+    [Fact]
+    public async Task CambiarEstado_AccionInvalida_Devuelve400()
+    {
+        var (ctrl, db) = Build();
+        var pozo = SeedPozo(db, estado: "Abierto");
+
+        var dto = new PozosController.CambiarEstadoDto("marcarLoQueSea", null, null, null, null);
+        var res = await ctrl.CambiarEstado(pozo.Id, dto);
+
+        Assert.IsType<BadRequestObjectResult>(res);
+    }
+
     // ---- GET /api/pozos/{id}/reparto ----
 
     [Fact]
