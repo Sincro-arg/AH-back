@@ -168,6 +168,104 @@ public class PozosController : ControllerBase
         return NoContent();
     }
 
+    public record CambiarEstadoDto(string Accion, decimal? PrecioCompra, DateTime? FechaCompra, decimal? PrecioVenta, DateTime? FechaVenta);
+
+    /// <summary>
+    /// Transiciona el estado del pozo: Abierto -> Comprado -> Vendido.
+    /// </summary>
+    [HttpPut("{id}/estado")]
+    [Authorize]
+    public async Task<IActionResult> CambiarEstado(Guid id, [FromBody] CambiarEstadoDto dto)
+    {
+        var pozo = await _context.Pozos.FindAsync(id);
+        if (pozo == null)
+            return NotFound(new { error = "El pozo no existe" });
+
+        if (dto == null || string.IsNullOrWhiteSpace(dto.Accion))
+            return BadRequest(new { error = "La acción es requerida" });
+
+        switch (dto.Accion)
+        {
+            case "marcarComprado":
+                if (dto.PrecioCompra == null || dto.FechaCompra == null)
+                    return BadRequest(new { error = "precioCompra y fechaCompra son requeridos" });
+
+                if (pozo.Estado != "Abierto")
+                    return Conflict(new { error = "Solo se puede marcar comprado un pozo Abierto" });
+
+                pozo.PrecioCompra = dto.PrecioCompra;
+                pozo.FechaCompra = dto.FechaCompra;
+                pozo.Estado = "Comprado";
+                break;
+
+            case "marcarVendido":
+                if (dto.PrecioVenta == null || dto.FechaVenta == null)
+                    return BadRequest(new { error = "precioVenta y fechaVenta son requeridos" });
+
+                if (pozo.Estado != "Comprado")
+                    return Conflict(new { error = "Solo se puede marcar vendido un pozo Comprado" });
+
+                pozo.PrecioVenta = dto.PrecioVenta;
+                pozo.FechaVenta = dto.FechaVenta;
+                pozo.Estado = "Vendido";
+                break;
+
+            default:
+                return BadRequest(new { error = "Acción inválida" });
+        }
+
+        await _context.SaveChangesAsync();
+
+        return Ok(MapPozo(pozo));
+    }
+
+    /// <summary>
+    /// Reparto de la ganancia de un pozo Vendido, proporcional al monto de cada inversion.
+    /// </summary>
+    [HttpGet("{id}/reparto")]
+    [Authorize]
+    public async Task<IActionResult> Reparto(Guid id)
+    {
+        var pozo = await _context.Pozos.FindAsync(id);
+        if (pozo == null)
+            return NotFound(new { error = "El pozo no existe" });
+
+        if (pozo.Estado != "Vendido")
+            return Conflict(new { error = "El pozo todavía no fue vendido" });
+
+        var gananciaTotal = pozo.PrecioVenta!.Value - pozo.PrecioCompra!.Value;
+
+        var inversiones = await _context.Inversiones
+            .Where(i => i.PozoId == id)
+            .OrderBy(i => i.Fecha)
+            .Join(_context.Usuarios, i => i.UsuarioId, u => u.Id, (i, u) => new
+            {
+                i.UsuarioId,
+                NombreInversor = u.Nombre + " " + u.Apellido,
+                i.Monto,
+            })
+            .ToListAsync();
+
+        var reparto = inversiones.Select(i =>
+        {
+            var porcentaje = pozo.MontoRecaudado > 0 ? i.Monto / pozo.MontoRecaudado : 0m;
+            return new
+            {
+                usuarioId = i.UsuarioId.ToString(),
+                nombreInversor = i.NombreInversor,
+                montoInvertido = i.Monto,
+                porcentaje,
+                ganancia = gananciaTotal * porcentaje,
+            };
+        }).ToList();
+
+        return Ok(new
+        {
+            gananciaTotal,
+            reparto,
+        });
+    }
+
     private static object MapPozo(Pozo pozo) => new
     {
         id = pozo.Id.ToString(),
