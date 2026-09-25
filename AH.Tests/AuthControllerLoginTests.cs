@@ -66,6 +66,10 @@ public class AuthControllerLoginTests
         Assert.Equal(usuario.Email, GetProp(usuarioDto!, "email"));
         Assert.Equal(usuario.Nombre, GetProp(usuarioDto!, "nombre"));
         Assert.Equal(usuario.Apellido, GetProp(usuarioDto!, "apellido"));
+        Assert.Equal(usuario.Telefono, GetProp(usuarioDto!, "telefono"));
+        Assert.Equal(usuario.Tema, GetProp(usuarioDto!, "tema"));
+        Assert.False(string.IsNullOrWhiteSpace(GetProp(usuarioDto!, "fechaAlta") as string));
+        Assert.Equal(usuario.NotificacionesEmail, GetProp(usuarioDto!, "notificacionesEmail"));
     }
 
     [Fact]
