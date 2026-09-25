@@ -193,6 +193,36 @@ public class UsuariosController : ControllerBase
         return NoContent();
     }
 
+    [HttpGet("me/inversiones")]
+    public async Task<IActionResult> GetMisInversiones()
+    {
+        var idClaim = User.FindFirstValue(JwtRegisteredClaimNames.Sub)
+            ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (idClaim == null || !Guid.TryParse(idClaim, out var id))
+            return Unauthorized(new { error = "Token inválido" });
+
+        var inversiones = await _context.Inversiones
+            .Where(i => i.UsuarioId == id)
+            .OrderByDescending(i => i.Fecha)
+            .Join(_context.Pozos, i => i.PozoId, p => p.Id, (i, p) => new { i, p })
+            .Select(x => new
+            {
+                id = x.i.Id.ToString(),
+                pozoId = x.i.PozoId.ToString(),
+                tituloPozo = x.p.Titulo,
+                estadoPozo = x.p.Estado,
+                monto = x.i.Monto,
+                fecha = x.i.Fecha.ToString("o"),
+                gananciaCorrespondiente = x.p.Estado == "Vendido" && x.p.MontoRecaudado != 0
+                    ? (decimal?)((x.p.PrecioVenta ?? 0m) - (x.p.PrecioCompra ?? 0m)) * (x.i.Monto / x.p.MontoRecaudado)
+                    : null,
+            })
+            .ToListAsync();
+
+        return Ok(inversiones);
+    }
+
     private static bool EsEmailValido(string? email)
     {
         if (string.IsNullOrWhiteSpace(email))

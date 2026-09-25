@@ -171,4 +171,99 @@ public class InversionesControllerTests
 
         Assert.IsType<NotFoundObjectResult>(res);
     }
+
+    // ---- PUT /api/inversiones/{id} ----
+
+    [Fact]
+    public async Task Editar_CaminoFeliz_ActualizaMontoYRecalculaElPozo()
+    {
+        var (ctrl, db) = Build();
+        var pozo = SeedPozo(db, montoRecaudado: 100000m);
+        var usuario = SeedUsuario(db, "inversor@example.com");
+        var inversion = new Inversion { PozoId = pozo.Id, UsuarioId = usuario.Id, Monto = 40000m };
+        db.Inversiones.Add(inversion);
+        db.SaveChanges();
+        AutenticarComo(ctrl, usuario.Id);
+
+        var dto = new InversionesController.EditarInversionDto(60000m);
+        var res = await ctrl.Editar(inversion.Id, dto);
+
+        var ok = Assert.IsType<OkObjectResult>(res);
+        Assert.Equal(60000m, GetProp(ok.Value!, "monto"));
+
+        var inversionActualizada = await db.Inversiones.FindAsync(inversion.Id);
+        Assert.Equal(60000m, inversionActualizada!.Monto);
+
+        var pozoActualizado = await db.Pozos.FindAsync(pozo.Id);
+        Assert.Equal(120000m, pozoActualizado!.MontoRecaudado);
+    }
+
+    [Fact]
+    public async Task Editar_NoEsElDueño_Devuelve403YNoCambiaNada()
+    {
+        var (ctrl, db) = Build();
+        var pozo = SeedPozo(db, montoRecaudado: 100000m);
+        var dueño = SeedUsuario(db, "dueño@example.com");
+        var otro = SeedUsuario(db, "otro@example.com");
+        var inversion = new Inversion { PozoId = pozo.Id, UsuarioId = dueño.Id, Monto = 40000m };
+        db.Inversiones.Add(inversion);
+        db.SaveChanges();
+        AutenticarComo(ctrl, otro.Id);
+
+        var dto = new InversionesController.EditarInversionDto(60000m);
+        var res = await ctrl.Editar(inversion.Id, dto);
+
+        var objectResult = Assert.IsType<ObjectResult>(res);
+        Assert.Equal(403, objectResult.StatusCode);
+
+        var inversionSinCambios = await db.Inversiones.FindAsync(inversion.Id);
+        Assert.Equal(40000m, inversionSinCambios!.Monto);
+
+        var pozoSinCambios = await db.Pozos.FindAsync(pozo.Id);
+        Assert.Equal(100000m, pozoSinCambios!.MontoRecaudado);
+    }
+
+    // ---- DELETE /api/inversiones/{id} ----
+
+    [Fact]
+    public async Task Borrar_CaminoFeliz_EliminaLaInversionYRecalculaElPozo()
+    {
+        var (ctrl, db) = Build();
+        var pozo = SeedPozo(db, montoRecaudado: 100000m);
+        var usuario = SeedUsuario(db, "inversor@example.com");
+        var inversion = new Inversion { PozoId = pozo.Id, UsuarioId = usuario.Id, Monto = 40000m };
+        db.Inversiones.Add(inversion);
+        db.SaveChanges();
+        AutenticarComo(ctrl, usuario.Id);
+
+        var res = await ctrl.Borrar(inversion.Id);
+
+        Assert.IsType<NoContentResult>(res);
+        Assert.Empty(db.Inversiones);
+
+        var pozoActualizado = await db.Pozos.FindAsync(pozo.Id);
+        Assert.Equal(60000m, pozoActualizado!.MontoRecaudado);
+    }
+
+    [Fact]
+    public async Task Borrar_NoEsElDueño_Devuelve403YNoBorraNada()
+    {
+        var (ctrl, db) = Build();
+        var pozo = SeedPozo(db, montoRecaudado: 100000m);
+        var dueño = SeedUsuario(db, "dueño@example.com");
+        var otro = SeedUsuario(db, "otro@example.com");
+        var inversion = new Inversion { PozoId = pozo.Id, UsuarioId = dueño.Id, Monto = 40000m };
+        db.Inversiones.Add(inversion);
+        db.SaveChanges();
+        AutenticarComo(ctrl, otro.Id);
+
+        var res = await ctrl.Borrar(inversion.Id);
+
+        var objectResult = Assert.IsType<ObjectResult>(res);
+        Assert.Equal(403, objectResult.StatusCode);
+
+        Assert.Single(db.Inversiones);
+        var pozoSinCambios = await db.Pozos.FindAsync(pozo.Id);
+        Assert.Equal(100000m, pozoSinCambios!.MontoRecaudado);
+    }
 }

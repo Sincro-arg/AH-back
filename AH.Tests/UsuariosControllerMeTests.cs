@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Security.Claims;
 using Xunit;
 
@@ -345,5 +346,47 @@ public class UsuariosControllerMeTests
 
         var unauthorized = Assert.IsType<UnauthorizedObjectResult>(res);
         Assert.Equal("Token inválido", GetProp(unauthorized.Value!, "error"));
+    }
+
+    [Fact]
+    public async Task GetMisInversiones_DevuelveSoloLasDelUsuarioConDatosDelPozo()
+    {
+        var (ctrl, db) = Build();
+        var usuarioA = SeedUsuario(db, "a@example.com");
+        var usuarioB = SeedUsuario(db, "b@example.com");
+
+        var pozoAbierto = new Pozo { Titulo = "Fiat Cronos", AutoDescripcion = "desc", MontoObjetivo = 100000m, MontoRecaudado = 30000m, Estado = "Abierto" };
+        var pozoVendido = new Pozo
+        {
+            Titulo = "Corolla",
+            AutoDescripcion = "desc",
+            MontoObjetivo = 100000m,
+            MontoRecaudado = 50000m,
+            Estado = "Vendido",
+            PrecioCompra = 40000m,
+            PrecioVenta = 60000m,
+        };
+        db.Pozos.AddRange(pozoAbierto, pozoVendido);
+        db.SaveChanges();
+
+        db.Inversiones.Add(new Inversion { PozoId = pozoAbierto.Id, UsuarioId = usuarioA.Id, Monto = 30000m });
+        db.Inversiones.Add(new Inversion { PozoId = pozoVendido.Id, UsuarioId = usuarioA.Id, Monto = 25000m });
+        db.Inversiones.Add(new Inversion { PozoId = pozoVendido.Id, UsuarioId = usuarioB.Id, Monto = 25000m });
+        db.SaveChanges();
+
+        AutenticarComo(ctrl, usuarioA.Id);
+        var res = await ctrl.GetMisInversiones();
+
+        var ok = Assert.IsType<OkObjectResult>(res);
+        var lista = ((System.Collections.IEnumerable)ok.Value!).Cast<object>().ToList();
+        Assert.Equal(2, lista.Count);
+
+        var deAbierto = lista.Single(x => (string)GetProp(x, "tituloPozo")! == "Fiat Cronos");
+        Assert.Equal("Abierto", GetProp(deAbierto, "estadoPozo"));
+        Assert.Null(GetProp(deAbierto, "gananciaCorrespondiente"));
+
+        var deVendido = lista.Single(x => (string)GetProp(x, "tituloPozo")! == "Corolla");
+        Assert.Equal("Vendido", GetProp(deVendido, "estadoPozo"));
+        Assert.Equal(10000m, GetProp(deVendido, "gananciaCorrespondiente"));
     }
 }

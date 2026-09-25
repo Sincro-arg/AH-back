@@ -85,6 +85,81 @@ public class InversionesController : ControllerBase
         return Ok(inversiones);
     }
 
+    public record EditarInversionDto(decimal Monto);
+
+    /// <summary>
+    /// Edita el monto de una inversion propia y recalcula el monto recaudado del pozo.
+    /// </summary>
+    [HttpPut("api/inversiones/{id}")]
+    [Authorize]
+    public async Task<IActionResult> Editar(Guid id, [FromBody] EditarInversionDto dto)
+    {
+        var idClaim = User.FindFirstValue(JwtRegisteredClaimNames.Sub)
+            ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (idClaim == null || !Guid.TryParse(idClaim, out var usuarioId))
+            return Unauthorized(new { error = "Token inválido" });
+
+        var inversion = await _context.Inversiones.FindAsync(id);
+        if (inversion == null)
+            return NotFound(new { error = "La inversión no existe" });
+
+        if (inversion.UsuarioId != usuarioId)
+            return StatusCode(403, new { error = "No sos el dueño de esta inversión" });
+
+        if (dto == null || dto.Monto <= 0)
+            return BadRequest(new { error = "El monto debe ser mayor a cero" });
+
+        var pozo = await _context.Pozos.FindAsync(inversion.PozoId);
+        if (pozo == null)
+            return NotFound(new { error = "El pozo no existe" });
+
+        if (pozo.Estado != "Abierto")
+            return Conflict(new { error = "El pozo no está abierto" });
+
+        pozo.MontoRecaudado += dto.Monto - inversion.Monto;
+        inversion.Monto = dto.Monto;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(MapInversion(inversion));
+    }
+
+    /// <summary>
+    /// Borra una inversion propia y recalcula el monto recaudado del pozo.
+    /// </summary>
+    [HttpDelete("api/inversiones/{id}")]
+    [Authorize]
+    public async Task<IActionResult> Borrar(Guid id)
+    {
+        var idClaim = User.FindFirstValue(JwtRegisteredClaimNames.Sub)
+            ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (idClaim == null || !Guid.TryParse(idClaim, out var usuarioId))
+            return Unauthorized(new { error = "Token inválido" });
+
+        var inversion = await _context.Inversiones.FindAsync(id);
+        if (inversion == null)
+            return NotFound(new { error = "La inversión no existe" });
+
+        if (inversion.UsuarioId != usuarioId)
+            return StatusCode(403, new { error = "No sos el dueño de esta inversión" });
+
+        var pozo = await _context.Pozos.FindAsync(inversion.PozoId);
+        if (pozo == null)
+            return NotFound(new { error = "El pozo no existe" });
+
+        if (pozo.Estado != "Abierto")
+            return Conflict(new { error = "El pozo no está abierto" });
+
+        pozo.MontoRecaudado -= inversion.Monto;
+        _context.Inversiones.Remove(inversion);
+
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
+
     private static object MapInversion(Inversion inversion) => new
     {
         id = inversion.Id.ToString(),
