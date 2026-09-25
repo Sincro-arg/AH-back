@@ -250,6 +250,38 @@ public class UsuariosControllerMeTests
     }
 
     [Fact]
+    public async Task UpdateNotificaciones_ConToken_ActualizaYPersisteElValor()
+    {
+        var (ctrl, db) = Build();
+        var usuario = SeedUsuario(db, "a@example.com");
+        AutenticarComo(ctrl, usuario.Id);
+
+        var dto = new UsuariosController.UpdateNotificacionesDto(false);
+        var res = await ctrl.UpdateNotificaciones(dto);
+
+        var ok = Assert.IsType<OkObjectResult>(res);
+        Assert.Equal(false, GetProp(ok.Value!, "notificacionesEmail"));
+
+        var enDb = await db.Usuarios.FindAsync(usuario.Id);
+        Assert.False(enDb!.NotificacionesEmail);
+    }
+
+    [Fact]
+    public async Task UpdateNotificaciones_SinToken_Devuelve401()
+    {
+        var (ctrl, _) = Build();
+        ctrl.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext(),
+        };
+
+        var res = await ctrl.UpdateNotificaciones(new UsuariosController.UpdateNotificacionesDto(true));
+
+        var unauthorized = Assert.IsType<UnauthorizedObjectResult>(res);
+        Assert.Equal("Token inválido", GetProp(unauthorized.Value!, "error"));
+    }
+
+    [Fact]
     public async Task DeleteMe_ConToken_BorraElUsuarioYDevuelve204()
     {
         var (ctrl, db) = Build();
