@@ -3,10 +3,10 @@
 # sistema al publicar; si lo editas, tu version manda.
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
-COPY AH.Api.csproj ./
-RUN dotnet restore AH.Api.csproj
+COPY AH.Api/AH.Api.csproj AH.Api/
+RUN dotnet restore AH.Api/AH.Api.csproj
 COPY . .
-RUN dotnet publish AH.Api.csproj -c Release -o /app/publish
+RUN dotnet publish AH.Api/AH.Api.csproj -c Release -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0
 WORKDIR /app
