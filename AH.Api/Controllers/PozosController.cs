@@ -1,4 +1,5 @@
 using AH.Api.Data;
+using AH.Api.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -84,4 +85,101 @@ public class PozosController : ControllerBase
             inversiones,
         });
     }
+
+    public record CrearPozoDto(string Titulo, string AutoDescripcion, decimal MontoObjetivo);
+
+    /// <summary>
+    /// Alta de un pozo nuevo, arranca siempre en estado Abierto y sin nada recaudado.
+    /// </summary>
+    [HttpPost]
+    [Authorize]
+    public async Task<IActionResult> Crear([FromBody] CrearPozoDto dto)
+    {
+        if (dto == null || string.IsNullOrWhiteSpace(dto.Titulo))
+            return BadRequest(new { error = "El título es requerido" });
+
+        if (dto.MontoObjetivo <= 0)
+            return BadRequest(new { error = "El monto objetivo debe ser mayor a cero" });
+
+        var pozo = new Pozo
+        {
+            Titulo = dto.Titulo.Trim(),
+            AutoDescripcion = dto.AutoDescripcion?.Trim() ?? string.Empty,
+            MontoObjetivo = dto.MontoObjetivo,
+            MontoRecaudado = 0,
+            Estado = "Abierto",
+        };
+
+        _context.Pozos.Add(pozo);
+        await _context.SaveChangesAsync();
+
+        return StatusCode(201, MapPozo(pozo));
+    }
+
+    public record ActualizarPozoDto(string Titulo, string AutoDescripcion, decimal MontoObjetivo);
+
+    /// <summary>
+    /// Edicion de titulo/descripcion/objetivo. Solo se puede mientras el pozo sigue Abierto.
+    /// </summary>
+    [HttpPut("{id}")]
+    [Authorize]
+    public async Task<IActionResult> Actualizar(Guid id, [FromBody] ActualizarPozoDto dto)
+    {
+        var pozo = await _context.Pozos.FindAsync(id);
+        if (pozo == null)
+            return NotFound(new { error = "El pozo no existe" });
+
+        if (dto == null || string.IsNullOrWhiteSpace(dto.Titulo))
+            return BadRequest(new { error = "El título es requerido" });
+
+        if (dto.MontoObjetivo <= 0)
+            return BadRequest(new { error = "El monto objetivo debe ser mayor a cero" });
+
+        if (pozo.Estado != "Abierto")
+            return Conflict(new { error = "Solo se puede editar un pozo mientras está Abierto" });
+
+        pozo.Titulo = dto.Titulo.Trim();
+        pozo.AutoDescripcion = dto.AutoDescripcion?.Trim() ?? string.Empty;
+        pozo.MontoObjetivo = dto.MontoObjetivo;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(MapPozo(pozo));
+    }
+
+    /// <summary>
+    /// Baja de un pozo. No se puede si ya tiene inversiones cargadas.
+    /// </summary>
+    [HttpDelete("{id}")]
+    [Authorize]
+    public async Task<IActionResult> Eliminar(Guid id)
+    {
+        var pozo = await _context.Pozos.FindAsync(id);
+        if (pozo == null)
+            return NotFound(new { error = "El pozo no existe" });
+
+        var tieneInversiones = await _context.Inversiones.AnyAsync(i => i.PozoId == id);
+        if (tieneInversiones)
+            return Conflict(new { error = "No se puede eliminar un pozo que ya tiene inversiones" });
+
+        _context.Pozos.Remove(pozo);
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
+
+    private static object MapPozo(Pozo pozo) => new
+    {
+        id = pozo.Id.ToString(),
+        titulo = pozo.Titulo,
+        autoDescripcion = pozo.AutoDescripcion,
+        montoObjetivo = pozo.MontoObjetivo,
+        montoRecaudado = pozo.MontoRecaudado,
+        estado = pozo.Estado,
+        fechaCreacion = pozo.FechaCreacion.ToString("o"),
+        precioCompra = pozo.PrecioCompra,
+        fechaCompra = pozo.FechaCompra.HasValue ? pozo.FechaCompra.Value.ToString("o") : null,
+        precioVenta = pozo.PrecioVenta,
+        fechaVenta = pozo.FechaVenta.HasValue ? pozo.FechaVenta.Value.ToString("o") : null,
+    };
 }
