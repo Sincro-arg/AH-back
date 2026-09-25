@@ -65,4 +65,56 @@ public class DbSeederTests
         var usuarioDto = GetProp(ok.Value!, "usuario");
         Assert.Equal(DbSeeder.AdminEmail, GetProp(usuarioDto!, "email"));
     }
+
+    [Fact]
+    public void SeedPozos_CreaLosTresPozosDeEjemploConSusEstados()
+    {
+        var db = BuildDb();
+
+        DbSeeder.SeedPozos(db);
+
+        Assert.Equal(3, db.Pozos.Count());
+        Assert.Single(db.Pozos, p => p.Estado == "Abierto");
+        Assert.Single(db.Pozos, p => p.Estado == "Comprado");
+        Assert.Single(db.Pozos, p => p.Estado == "Vendido");
+    }
+
+    [Fact]
+    public void SeedPozos_ElPozoComprado_TienePrecioYFechaDeCompra()
+    {
+        var db = BuildDb();
+
+        DbSeeder.SeedPozos(db);
+
+        var pozo = db.Pozos.Single(p => p.Estado == "Comprado");
+        Assert.NotNull(pozo.PrecioCompra);
+        Assert.NotNull(pozo.FechaCompra);
+        Assert.Null(pozo.PrecioVenta);
+        Assert.Null(pozo.FechaVenta);
+    }
+
+    [Fact]
+    public void SeedPozos_ElPozoVendido_TienePrecioYFechaDeCompraYVenta()
+    {
+        var db = BuildDb();
+
+        DbSeeder.SeedPozos(db);
+
+        var pozo = db.Pozos.Single(p => p.Estado == "Vendido");
+        Assert.NotNull(pozo.PrecioCompra);
+        Assert.NotNull(pozo.FechaCompra);
+        Assert.NotNull(pozo.PrecioVenta);
+        Assert.NotNull(pozo.FechaVenta);
+    }
+
+    [Fact]
+    public void SeedPozos_EsIdempotente_NoDuplicaSiSeLlamaDeNuevo()
+    {
+        var db = BuildDb();
+
+        DbSeeder.SeedPozos(db);
+        DbSeeder.SeedPozos(db);
+
+        Assert.Equal(3, db.Pozos.Count());
+    }
 }
