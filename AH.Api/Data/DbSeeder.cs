@@ -70,4 +70,28 @@ public static class DbSeeder
         );
         db.SaveChanges();
     }
+
+    // Una inversion de ejemplo del admin en el pozo 'VW Gol Trend 2019', para
+    // que la pantalla "Mis inversiones" no aparezca vacia al entrar con las
+    // credenciales de demo. El monto coincide con el MontoRecaudado ya
+    // sembrado en ese pozo (no lo modifica).
+    public static void SeedInversiones(AppDbContext db)
+    {
+        if (db.Inversiones.Any())
+            return;
+
+        var admin = db.Usuarios.SingleOrDefault(u => u.Email == AdminEmail);
+        var pozo = db.Pozos.SingleOrDefault(p => p.Titulo == "VW Gol Trend 2019");
+        if (admin is null || pozo is null)
+            return;
+
+        db.Inversiones.Add(new Inversion
+        {
+            PozoId = pozo.Id,
+            UsuarioId = admin.Id,
+            Monto = pozo.MontoRecaudado,
+            Fecha = pozo.FechaCompra ?? pozo.FechaCreacion,
+        });
+        db.SaveChanges();
+    }
 }

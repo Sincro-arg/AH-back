@@ -110,6 +110,7 @@ app.Lifetime.ApplicationStarted.Register(() =>
         db.Database.Migrate();
         DbSeeder.SeedAdminUsuario(db);
         DbSeeder.SeedPozos(db);
+        DbSeeder.SeedInversiones(db);
     }
     catch (Exception ex)
     {
