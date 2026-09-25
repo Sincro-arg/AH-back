@@ -248,4 +248,47 @@ public class UsuariosControllerMeTests
         var unauthorized = Assert.IsType<UnauthorizedObjectResult>(res);
         Assert.Equal("Token inválido", GetProp(unauthorized.Value!, "error"));
     }
+
+    [Fact]
+    public async Task DeleteMe_ConToken_BorraElUsuarioYDevuelve204()
+    {
+        var (ctrl, db) = Build();
+        var usuario = SeedUsuario(db, "a@example.com");
+        AutenticarComo(ctrl, usuario.Id);
+
+        var res = await ctrl.DeleteMe();
+
+        Assert.IsType<NoContentResult>(res);
+        var enDb = await db.Usuarios.FindAsync(usuario.Id);
+        Assert.Null(enDb);
+    }
+
+    [Fact]
+    public async Task DeleteMe_SoloBorraElUsuarioAutenticado_NoAOtros()
+    {
+        var (ctrl, db) = Build();
+        var usuarioA = SeedUsuario(db, "a@example.com");
+        var usuarioB = SeedUsuario(db, "b@example.com");
+        AutenticarComo(ctrl, usuarioA.Id);
+
+        await ctrl.DeleteMe();
+
+        var bEnDb = await db.Usuarios.FindAsync(usuarioB.Id);
+        Assert.NotNull(bEnDb);
+    }
+
+    [Fact]
+    public async Task DeleteMe_SinToken_Devuelve401()
+    {
+        var (ctrl, _) = Build();
+        ctrl.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext(),
+        };
+
+        var res = await ctrl.DeleteMe();
+
+        var unauthorized = Assert.IsType<UnauthorizedObjectResult>(res);
+        Assert.Equal("Token inválido", GetProp(unauthorized.Value!, "error"));
+    }
 }

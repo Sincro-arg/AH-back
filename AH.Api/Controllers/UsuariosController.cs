@@ -146,6 +146,25 @@ public class UsuariosController : ControllerBase
         return Ok(new { tema = usuario.Tema });
     }
 
+    [HttpDelete("me")]
+    public async Task<IActionResult> DeleteMe()
+    {
+        var idClaim = User.FindFirstValue(JwtRegisteredClaimNames.Sub)
+            ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (idClaim == null || !Guid.TryParse(idClaim, out var id))
+            return Unauthorized(new { error = "Token inválido" });
+
+        var usuario = await _context.Usuarios.FindAsync(id);
+        if (usuario == null)
+            return Unauthorized(new { error = "Token inválido" });
+
+        _context.Usuarios.Remove(usuario);
+        await _context.SaveChangesAsync();
+
+        return NoContent();
+    }
+
     private static bool EsEmailValido(string? email)
     {
         if (string.IsNullOrWhiteSpace(email))
