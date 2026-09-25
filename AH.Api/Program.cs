@@ -92,23 +92,27 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// Siembra el usuario de prueba del pliego (admin@cuentas.com). Se registra para
+// Aplica migraciones pendientes y siembra el usuario de prueba del pliego
+// (admin@cuentas.com). No hay un paso de deploy separado que corra
+// `dotnet ef database update`, asi que se hace al arrancar. Se registra para
 // correr recien despues de ApplicationStarted -es decir, con Kestrel ya escuchando
 // el puerto- para que un problema o demora contra la base (cold start, DNS, etc.)
 // nunca bloquee el bind del puerto: si esto corriera antes de app.Run(), un hosting
 // con health check por puerto (como Render) nunca ve el servicio arriba y todo pedido
-// externo cuelga hasta el timeout, aunque el proceso este vivo.
+// externo cuelga hasta el timeout, aunque el proceso este vivo. Va en try/catch
+// porque no tiene que tumbar el arranque si la base no esta disponible en ese momento.
 app.Lifetime.ApplicationStarted.Register(() =>
 {
     using var scope = app.Services.CreateScope();
     try
     {
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        db.Database.Migrate();
         DbSeeder.SeedAdminUsuario(db);
     }
     catch (Exception ex)
     {
-        app.Logger.LogWarning(ex, "No se pudo sembrar el usuario de prueba admin@cuentas.com");
+        app.Logger.LogWarning(ex, "No se pudo migrar/sembrar la base de datos");
     }
 });
 
