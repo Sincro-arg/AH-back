@@ -334,6 +334,27 @@ public class UsuariosControllerMeTests
     }
 
     [Fact]
+    public async Task DeleteMe_ConInversionesCargadas_Devuelve409YNoBorra()
+    {
+        var (ctrl, db) = Build();
+        var usuario = SeedUsuario(db, "a@example.com");
+        var pozo = new Pozo { Titulo = "Fiat Cronos", AutoDescripcion = "desc", MontoObjetivo = 100000m, MontoRecaudado = 0m, Estado = "Abierto" };
+        db.Pozos.Add(pozo);
+        db.SaveChanges();
+        db.Inversiones.Add(new Inversion { PozoId = pozo.Id, UsuarioId = usuario.Id, Monto = 10000m });
+        db.SaveChanges();
+        AutenticarComo(ctrl, usuario.Id);
+
+        var res = await ctrl.DeleteMe();
+
+        var conflict = Assert.IsType<ConflictObjectResult>(res);
+        Assert.Equal("No se puede eliminar la cuenta mientras tengas inversiones cargadas", GetProp(conflict.Value!, "error"));
+
+        var enDb = await db.Usuarios.FindAsync(usuario.Id);
+        Assert.NotNull(enDb);
+    }
+
+    [Fact]
     public async Task DeleteMe_SinToken_Devuelve401()
     {
         var (ctrl, _) = Build();

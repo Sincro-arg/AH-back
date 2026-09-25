@@ -187,6 +187,10 @@ public class UsuariosController : ControllerBase
         if (usuario == null)
             return Unauthorized(new { error = "Token inválido" });
 
+        var tieneInversiones = await _context.Inversiones.AnyAsync(i => i.UsuarioId == id);
+        if (tieneInversiones)
+            return Conflict(new { error = "No se puede eliminar la cuenta mientras tengas inversiones cargadas" });
+
         _context.Usuarios.Remove(usuario);
         await _context.SaveChangesAsync();
 
