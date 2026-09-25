@@ -11,6 +11,8 @@ public class AppDbContext : DbContext
 
     public DbSet<Usuario> Usuarios => Set<Usuario>();
 
+    public DbSet<Pozo> Pozos => Set<Pozo>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Usuario>()

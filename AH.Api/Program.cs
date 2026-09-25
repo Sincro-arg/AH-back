@@ -109,6 +109,7 @@ app.Lifetime.ApplicationStarted.Register(() =>
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         db.Database.Migrate();
         DbSeeder.SeedAdminUsuario(db);
+        DbSeeder.SeedPozos(db);
     }
     catch (Exception ex)
     {
