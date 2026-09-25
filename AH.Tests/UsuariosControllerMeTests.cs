@@ -229,5 +229,23 @@ public class UsuariosControllerMeTests
 
         var badRequest = Assert.IsType<BadRequestObjectResult>(res);
         Assert.Equal("El tema debe ser 'claro' u 'oscuro'", GetProp(badRequest.Value!, "error"));
+
+        var enDb = await db.Usuarios.FindAsync(usuario.Id);
+        Assert.Equal("claro", enDb!.Tema);
+    }
+
+    [Fact]
+    public async Task UpdateTema_SinToken_Devuelve401()
+    {
+        var (ctrl, _) = Build();
+        ctrl.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext(),
+        };
+
+        var res = await ctrl.UpdateTema(new UsuariosController.UpdateTemaDto("oscuro"));
+
+        var unauthorized = Assert.IsType<UnauthorizedObjectResult>(res);
+        Assert.Equal("Token inválido", GetProp(unauthorized.Value!, "error"));
     }
 }

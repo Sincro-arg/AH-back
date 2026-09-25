@@ -25,11 +25,6 @@ namespace AH.Api.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Nombre")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
                     b.Property<string>("Apellido")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -40,17 +35,22 @@ namespace AH.Api.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("character varying(150)");
 
-                    b.Property<string>("Telefono")
+                    b.Property<DateTime>("FechaAlta")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Nombre")
                         .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<DateTime>("FechaAlta")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<string>("Telefono")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
 
                     b.Property<string>("Tema")
                         .IsRequired()
