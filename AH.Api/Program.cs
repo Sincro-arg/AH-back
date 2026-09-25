@@ -1,5 +1,6 @@
 using AH.Api.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -33,7 +34,23 @@ if (!string.IsNullOrWhiteSpace(dbConnStr))
 
 builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(dbConnStr));
 
-builder.Services.AddControllers();
+// InvalidModelStateResponseFactory: los 400 automaticos de [ApiController] (JSON
+// invalido, un Guid con formato invalido en la ruta, etc.) devuelven por defecto un
+// ProblemDetails de ASP.NET Core. Se lo reemplaza aca para que el front reciba
+// siempre el mismo shape de error { error } que el resto de la API.
+builder.Services.AddControllers()
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var mensaje = context.ModelState.Values
+                .SelectMany(v => v.Errors)
+                .Select(e => e.ErrorMessage)
+                .FirstOrDefault(m => !string.IsNullOrWhiteSpace(m))
+                ?? "La solicitud tiene datos inválidos.";
+            return new BadRequestObjectResult(new { error = mensaje });
+        };
+    });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -84,6 +101,23 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("AllowFront"); // antes de auth/routing para que las respuestas de error también lleven los headers
+
+// Exception handler global: cualquier excepcion no controlada que llegue hasta aca
+// (una query de EF que falla, un null reference, lo que sea) devuelve siempre
+// { error } con 500 en vez de tumbar la respuesta o exponer un stack trace. Va
+// primero en la tuberia (despues de CORS, para que la respuesta de error tambien
+// lleve esos headers) para que envuelva a todo lo que viene despues: auth, authz
+// y los controllers.
+app.UseExceptionHandler(errApp =>
+{
+    errApp.Run(async context =>
+    {
+        context.Response.ContentType = "application/json";
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        await context.Response.WriteAsJsonAsync(new { error = "Ocurrió un error inesperado en el servidor. Intentá de nuevo más tarde." });
+    });
+});
+
 // Sin UseHttpsRedirection: Render (y hostings similares) terminan el TLS en su
 // proxy y reenvian HTTP puro al contenedor, que solo escucha http://0.0.0.0:{PORT}
 // (ver arriba). Redirigir a https aca generaba un loop contra ese proxy.
@@ -119,3 +153,8 @@ app.Lifetime.ApplicationStarted.Register(() =>
 });
 
 app.Run();
+
+// Se expone la clase Program (generada por los top-level statements) para que
+// AH.Tests pueda usar WebApplicationFactory<Program> y testear el pipeline HTTP
+// completo (exception handler global incluido).
+public partial class Program { }
