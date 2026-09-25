@@ -78,6 +78,9 @@ public class AuthController : ControllerBase
         if (usuario == null || !BCrypt.Net.BCrypt.Verify(dto.Password, usuario.PasswordHash))
             return Unauthorized(new { error = "Email o contraseña incorrectos" });
 
+        usuario.UltimoAcceso = DateTime.UtcNow;
+        await _context.SaveChangesAsync();
+
         var token = GenerateToken(usuario);
 
         return Ok(new
@@ -92,6 +95,8 @@ public class AuthController : ControllerBase
                 telefono = usuario.Telefono,
                 tema = usuario.Tema,
                 fechaAlta = usuario.FechaAlta.ToString("o"),
+                ultimoAcceso = usuario.UltimoAcceso.HasValue ? usuario.UltimoAcceso.Value.ToString("o") : null,
+                notificacionesEmail = usuario.NotificacionesEmail,
             },
         });
     }

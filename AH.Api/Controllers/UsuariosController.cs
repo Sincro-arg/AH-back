@@ -41,6 +41,8 @@ public class UsuariosController : ControllerBase
             telefono = usuario.Telefono,
             tema = usuario.Tema,
             fechaAlta = usuario.FechaAlta.ToString("o"),
+            ultimoAcceso = usuario.UltimoAcceso.HasValue ? usuario.UltimoAcceso.Value.ToString("o") : null,
+            notificacionesEmail = usuario.NotificacionesEmail,
         });
     }
 
@@ -92,6 +94,8 @@ public class UsuariosController : ControllerBase
             telefono = usuario.Telefono,
             tema = usuario.Tema,
             fechaAlta = usuario.FechaAlta.ToString("o"),
+            ultimoAcceso = usuario.UltimoAcceso.HasValue ? usuario.UltimoAcceso.Value.ToString("o") : null,
+            notificacionesEmail = usuario.NotificacionesEmail,
         });
     }
 
@@ -144,6 +148,27 @@ public class UsuariosController : ControllerBase
         await _context.SaveChangesAsync();
 
         return Ok(new { tema = usuario.Tema });
+    }
+
+    public record UpdateNotificacionesDto(bool NotificacionesEmail);
+
+    [HttpPut("me/notificaciones")]
+    public async Task<IActionResult> UpdateNotificaciones([FromBody] UpdateNotificacionesDto dto)
+    {
+        var idClaim = User.FindFirstValue(JwtRegisteredClaimNames.Sub)
+            ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (idClaim == null || !Guid.TryParse(idClaim, out var id))
+            return Unauthorized(new { error = "Token inválido" });
+
+        var usuario = await _context.Usuarios.FindAsync(id);
+        if (usuario == null)
+            return Unauthorized(new { error = "Token inválido" });
+
+        usuario.NotificacionesEmail = dto.NotificacionesEmail;
+        await _context.SaveChangesAsync();
+
+        return Ok(new { notificacionesEmail = usuario.NotificacionesEmail });
     }
 
     [HttpDelete("me")]

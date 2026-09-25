@@ -26,4 +26,8 @@ public class Usuario
 
     [MaxLength(10)]
     public string Tema { get; set; } = "claro";
+
+    public DateTime? UltimoAcceso { get; set; }
+
+    public bool NotificacionesEmail { get; set; } = true;
 }
