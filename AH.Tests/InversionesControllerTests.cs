@@ -223,6 +223,43 @@ public class InversionesControllerTests
         Assert.Equal(100000m, pozoSinCambios!.MontoRecaudado);
     }
 
+    [Fact]
+    public async Task Editar_InversionInexistente_Devuelve404()
+    {
+        var (ctrl, db) = Build();
+        var usuario = SeedUsuario(db, "inversor@example.com");
+        AutenticarComo(ctrl, usuario.Id);
+
+        var dto = new InversionesController.EditarInversionDto(60000m);
+        var res = await ctrl.Editar(Guid.NewGuid(), dto);
+
+        Assert.IsType<NotFoundObjectResult>(res);
+    }
+
+    [Fact]
+    public async Task Editar_PozoNoAbierto_Devuelve409YNoCambiaNada()
+    {
+        var (ctrl, db) = Build();
+        var pozo = SeedPozo(db, estado: "Comprado", montoRecaudado: 100000m);
+        var usuario = SeedUsuario(db, "inversor@example.com");
+        var inversion = new Inversion { PozoId = pozo.Id, UsuarioId = usuario.Id, Monto = 40000m };
+        db.Inversiones.Add(inversion);
+        db.SaveChanges();
+        AutenticarComo(ctrl, usuario.Id);
+
+        var dto = new InversionesController.EditarInversionDto(60000m);
+        var res = await ctrl.Editar(inversion.Id, dto);
+
+        var conflict = Assert.IsType<ConflictObjectResult>(res);
+        Assert.Equal("El pozo no está abierto", GetProp(conflict.Value!, "error"));
+
+        var inversionSinCambios = await db.Inversiones.FindAsync(inversion.Id);
+        Assert.Equal(40000m, inversionSinCambios!.Monto);
+
+        var pozoSinCambios = await db.Pozos.FindAsync(pozo.Id);
+        Assert.Equal(100000m, pozoSinCambios!.MontoRecaudado);
+    }
+
     // ---- DELETE /api/inversiones/{id} ----
 
     [Fact]
@@ -261,6 +298,39 @@ public class InversionesControllerTests
 
         var objectResult = Assert.IsType<ObjectResult>(res);
         Assert.Equal(403, objectResult.StatusCode);
+
+        Assert.Single(db.Inversiones);
+        var pozoSinCambios = await db.Pozos.FindAsync(pozo.Id);
+        Assert.Equal(100000m, pozoSinCambios!.MontoRecaudado);
+    }
+
+    [Fact]
+    public async Task Borrar_InversionInexistente_Devuelve404()
+    {
+        var (ctrl, db) = Build();
+        var usuario = SeedUsuario(db, "inversor@example.com");
+        AutenticarComo(ctrl, usuario.Id);
+
+        var res = await ctrl.Borrar(Guid.NewGuid());
+
+        Assert.IsType<NotFoundObjectResult>(res);
+    }
+
+    [Fact]
+    public async Task Borrar_PozoNoAbierto_Devuelve409YNoBorraNada()
+    {
+        var (ctrl, db) = Build();
+        var pozo = SeedPozo(db, estado: "Comprado", montoRecaudado: 100000m);
+        var usuario = SeedUsuario(db, "inversor@example.com");
+        var inversion = new Inversion { PozoId = pozo.Id, UsuarioId = usuario.Id, Monto = 40000m };
+        db.Inversiones.Add(inversion);
+        db.SaveChanges();
+        AutenticarComo(ctrl, usuario.Id);
+
+        var res = await ctrl.Borrar(inversion.Id);
+
+        var conflict = Assert.IsType<ConflictObjectResult>(res);
+        Assert.Equal("El pozo no está abierto", GetProp(conflict.Value!, "error"));
 
         Assert.Single(db.Inversiones);
         var pozoSinCambios = await db.Pozos.FindAsync(pozo.Id);
