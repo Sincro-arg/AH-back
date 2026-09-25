@@ -93,6 +93,12 @@ public class UsuariosControllerMeTests
         Assert.Equal(usuarioA.Id.ToString(), GetProp(ok.Value!, "id"));
         Assert.Equal(usuarioA.Email, GetProp(ok.Value!, "email"));
         Assert.Equal(usuarioA.Nombre, GetProp(ok.Value!, "nombre"));
+        Assert.Equal(usuarioA.Telefono, GetProp(ok.Value!, "telefono"));
+        Assert.Equal(usuarioA.Tema, GetProp(ok.Value!, "tema"));
+        Assert.Equal(usuarioA.FechaAlta.ToString("o"), GetProp(ok.Value!, "fechaAlta"));
+        Assert.Null(usuarioA.UltimoAcceso);
+        Assert.Null(GetProp(ok.Value!, "ultimoAcceso"));
+        Assert.Equal(usuarioA.NotificacionesEmail, GetProp(ok.Value!, "notificacionesEmail"));
         Assert.NotEqual(usuarioB.Id.ToString(), GetProp(ok.Value!, "id"));
         Assert.NotEqual(usuarioB.Email, GetProp(ok.Value!, "email"));
     }
