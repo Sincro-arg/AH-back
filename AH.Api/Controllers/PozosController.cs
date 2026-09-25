@@ -1,4 +1,5 @@
 using AH.Api.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -41,5 +42,46 @@ public class PozosController : ControllerBase
             .ToListAsync();
 
         return Ok(pozos);
+    }
+
+    /// <summary>
+    /// Detalle de un pozo con sus inversiones, para el inversor autenticado.
+    /// </summary>
+    [HttpGet("{id}")]
+    [Authorize]
+    public async Task<IActionResult> ObtenerPorId(Guid id)
+    {
+        var pozo = await _context.Pozos.FindAsync(id);
+        if (pozo == null)
+            return NotFound(new { error = "El pozo no existe" });
+
+        var inversiones = await _context.Inversiones
+            .Where(i => i.PozoId == id)
+            .OrderBy(i => i.Fecha)
+            .Join(_context.Usuarios, i => i.UsuarioId, u => u.Id, (i, u) => new
+            {
+                id = i.Id.ToString(),
+                usuarioId = i.UsuarioId.ToString(),
+                nombreInversor = u.Nombre + " " + u.Apellido,
+                monto = i.Monto,
+                fecha = i.Fecha.ToString("o"),
+            })
+            .ToListAsync();
+
+        return Ok(new
+        {
+            id = pozo.Id.ToString(),
+            titulo = pozo.Titulo,
+            autoDescripcion = pozo.AutoDescripcion,
+            montoObjetivo = pozo.MontoObjetivo,
+            montoRecaudado = pozo.MontoRecaudado,
+            estado = pozo.Estado,
+            fechaCreacion = pozo.FechaCreacion.ToString("o"),
+            precioCompra = pozo.PrecioCompra,
+            fechaCompra = pozo.FechaCompra.HasValue ? pozo.FechaCompra.Value.ToString("o") : null,
+            precioVenta = pozo.PrecioVenta,
+            fechaVenta = pozo.FechaVenta.HasValue ? pozo.FechaVenta.Value.ToString("o") : null,
+            inversiones,
+        });
     }
 }
