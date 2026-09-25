@@ -118,6 +118,10 @@ public class UsuariosControllerMeTests
         Assert.Equal("Apellido", GetProp(ok.Value!, "apellido"));
         Assert.Equal("nuevo@example.com", GetProp(ok.Value!, "email"));
         Assert.Equal("5599887766", GetProp(ok.Value!, "telefono"));
+        Assert.Equal(usuario.Tema, GetProp(ok.Value!, "tema"));
+        Assert.Null(usuario.UltimoAcceso);
+        Assert.Null(GetProp(ok.Value!, "ultimoAcceso"));
+        Assert.Equal(usuario.NotificacionesEmail, GetProp(ok.Value!, "notificacionesEmail"));
 
         var enDb = await db.Usuarios.FindAsync(usuario.Id);
         Assert.Equal("nuevo@example.com", enDb!.Email);
