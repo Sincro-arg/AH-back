@@ -165,6 +165,9 @@ public class UsuariosController : ControllerBase
         if (usuario == null)
             return Unauthorized(new { error = "Token inválido" });
 
+        if (dto == null)
+            return BadRequest(new { error = "Datos inválidos" });
+
         usuario.NotificacionesEmail = dto.NotificacionesEmail;
         await _context.SaveChangesAsync();
 

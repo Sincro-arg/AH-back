@@ -267,6 +267,19 @@ public class UsuariosControllerMeTests
     }
 
     [Fact]
+    public async Task UpdateNotificaciones_DtoNulo_Devuelve400()
+    {
+        var (ctrl, db) = Build();
+        var usuario = SeedUsuario(db, "a@example.com");
+        AutenticarComo(ctrl, usuario.Id);
+
+        var res = await ctrl.UpdateNotificaciones(null!);
+
+        var badRequest = Assert.IsType<BadRequestObjectResult>(res);
+        Assert.Equal("Datos inválidos", GetProp(badRequest.Value!, "error"));
+    }
+
+    [Fact]
     public async Task UpdateNotificaciones_SinToken_Devuelve401()
     {
         var (ctrl, _) = Build();
