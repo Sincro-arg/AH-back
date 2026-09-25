@@ -410,4 +410,19 @@ public class UsuariosControllerMeTests
         Assert.Equal("Vendido", GetProp(deVendido, "estadoPozo"));
         Assert.Equal(10000m, GetProp(deVendido, "gananciaCorrespondiente"));
     }
+
+    [Fact]
+    public async Task GetMisInversiones_SinToken_Devuelve401()
+    {
+        var (ctrl, _) = Build();
+        ctrl.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext(),
+        };
+
+        var res = await ctrl.GetMisInversiones();
+
+        var unauthorized = Assert.IsType<UnauthorizedObjectResult>(res);
+        Assert.Equal("Token inválido", GetProp(unauthorized.Value!, "error"));
+    }
 }
