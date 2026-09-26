@@ -89,6 +89,29 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAudience            = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey         = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
         };
+        // Sin esto, un request sin Authorization header o con un token vencido/invalido
+        // llega al front con 401/403 y body VACIO: el handler por defecto de JwtBearer
+        // no escribe nada. El resto de la API siempre responde { error }, asi que este
+        // caso (rechazado por el pipeline de auth, antes de llegar a ningun controller)
+        // tiene que quedar igual.
+        options.Events = new JwtBearerEvents
+        {
+            OnChallenge = async context =>
+            {
+                // Sin HandleResponse(), ASP.NET Core igual escribe su respuesta 401
+                // default (vacia) despues de este evento.
+                context.HandleResponse();
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                context.Response.ContentType = "application/json";
+                await context.Response.WriteAsJsonAsync(new { error = "No autorizado. Iniciá sesión de nuevo." });
+            },
+            OnForbidden = async context =>
+            {
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                context.Response.ContentType = "application/json";
+                await context.Response.WriteAsJsonAsync(new { error = "No tenés permisos para hacer esto." });
+            },
+        };
     });
 builder.Services.AddAuthorization();
 
