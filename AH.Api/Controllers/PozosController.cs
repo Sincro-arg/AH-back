@@ -39,6 +39,8 @@ public class PozosController : ControllerBase
                 fechaCompra = p.FechaCompra.HasValue ? p.FechaCompra.Value.ToString("o") : null,
                 precioVenta = p.PrecioVenta,
                 fechaVenta = p.FechaVenta.HasValue ? p.FechaVenta.Value.ToString("o") : null,
+                imagenUrl = p.ImagenUrl,
+                precioVentaEstimado = p.PrecioVentaEstimado,
             })
             .ToListAsync();
 
@@ -82,11 +84,13 @@ public class PozosController : ControllerBase
             fechaCompra = pozo.FechaCompra.HasValue ? pozo.FechaCompra.Value.ToString("o") : null,
             precioVenta = pozo.PrecioVenta,
             fechaVenta = pozo.FechaVenta.HasValue ? pozo.FechaVenta.Value.ToString("o") : null,
+            imagenUrl = pozo.ImagenUrl,
+            precioVentaEstimado = pozo.PrecioVentaEstimado,
             inversiones,
         });
     }
 
-    public record CrearPozoDto(string Titulo, string AutoDescripcion, decimal MontoObjetivo);
+    public record CrearPozoDto(string Titulo, string AutoDescripcion, decimal MontoObjetivo, string? ImagenUrl = null, decimal? PrecioVentaEstimado = null);
 
     /// <summary>
     /// Alta de un pozo nuevo, arranca siempre en estado Abierto y sin nada recaudado.
@@ -108,6 +112,8 @@ public class PozosController : ControllerBase
             MontoObjetivo = dto.MontoObjetivo,
             MontoRecaudado = 0,
             Estado = "Abierto",
+            ImagenUrl = string.IsNullOrWhiteSpace(dto.ImagenUrl) ? null : dto.ImagenUrl.Trim(),
+            PrecioVentaEstimado = dto.PrecioVentaEstimado,
         };
 
         _context.Pozos.Add(pozo);
@@ -116,7 +122,7 @@ public class PozosController : ControllerBase
         return StatusCode(201, MapPozo(pozo));
     }
 
-    public record ActualizarPozoDto(string Titulo, string AutoDescripcion, decimal MontoObjetivo);
+    public record ActualizarPozoDto(string Titulo, string AutoDescripcion, decimal MontoObjetivo, string? ImagenUrl = null, decimal? PrecioVentaEstimado = null);
 
     /// <summary>
     /// Edicion de titulo/descripcion/objetivo. Solo se puede mientras el pozo sigue Abierto.
@@ -141,6 +147,8 @@ public class PozosController : ControllerBase
         pozo.Titulo = dto.Titulo.Trim();
         pozo.AutoDescripcion = dto.AutoDescripcion?.Trim() ?? string.Empty;
         pozo.MontoObjetivo = dto.MontoObjetivo;
+        pozo.ImagenUrl = string.IsNullOrWhiteSpace(dto.ImagenUrl) ? null : dto.ImagenUrl.Trim();
+        pozo.PrecioVentaEstimado = dto.PrecioVentaEstimado;
 
         await _context.SaveChangesAsync();
 
@@ -279,5 +287,7 @@ public class PozosController : ControllerBase
         fechaCompra = pozo.FechaCompra.HasValue ? pozo.FechaCompra.Value.ToString("o") : null,
         precioVenta = pozo.PrecioVenta,
         fechaVenta = pozo.FechaVenta.HasValue ? pozo.FechaVenta.Value.ToString("o") : null,
+        imagenUrl = pozo.ImagenUrl,
+        precioVentaEstimado = pozo.PrecioVentaEstimado,
     };
 }

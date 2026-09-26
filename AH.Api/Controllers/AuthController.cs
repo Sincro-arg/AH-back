@@ -115,7 +115,7 @@ public class AuthController : ControllerBase
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
         };
 
-        var expireHours = int.TryParse(_config["Jwt:ExpireHours"], out var h) ? h : 8;
+        var expireHours = int.TryParse(_config["Jwt:ExpireHours"], out var h) ? h : 24;
 
         var token = new JwtSecurityToken(
             issuer: _config["Jwt:Issuer"],
