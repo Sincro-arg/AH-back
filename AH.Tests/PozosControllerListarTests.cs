@@ -20,7 +20,7 @@ public class PozosControllerListarTests
         return (ctrl, db);
     }
 
-    private static Pozo SeedPozo(AppDbContext db, string titulo, string estado = "Abierto")
+    private static Pozo SeedPozo(AppDbContext db, string titulo, string estado = "Abierto", bool esDatoDePrueba = false)
     {
         var pozo = new Pozo
         {
@@ -29,6 +29,7 @@ public class PozosControllerListarTests
             MontoObjetivo = 3000000m,
             MontoRecaudado = 1200000m,
             Estado = estado,
+            EsDatoDePrueba = esDatoDePrueba,
         };
         db.Pozos.Add(pozo);
         db.SaveChanges();
@@ -61,6 +62,21 @@ public class PozosControllerListarTests
 
         var item2 = lista.Single(o => (string)GetProp(o, "id")! == pozo2.Id.ToString());
         Assert.Equal(pozo2.Titulo, GetProp(item2, "titulo"));
+    }
+
+    [Fact]
+    public async Task ConPozoDeDatoDePrueba_LoExcluyeDelListado()
+    {
+        var (ctrl, db) = Build();
+        var pozoReal = SeedPozo(db, "Fiat Cronos 2021", esDatoDePrueba: false);
+        SeedPozo(db, "Pozo de prueba E2E", esDatoDePrueba: true);
+
+        var res = await ctrl.Listar();
+
+        var ok = Assert.IsType<OkObjectResult>(res);
+        var lista = (ok.Value as System.Collections.IEnumerable)!.Cast<object>().ToList();
+        Assert.Single(lista);
+        Assert.Equal(pozoReal.Id.ToString(), GetProp(lista[0], "id"));
     }
 
     [Fact]
