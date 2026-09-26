@@ -158,6 +158,7 @@ public class RealDeploymentE2ETests
             titulo,
             autoDescripcion = "Auto de prueba E2E, motor 1.6, 80.000km",
             montoObjetivo = 500000.50m,
+            esDatoDePrueba = true,
         });
         Assert.Equal(HttpStatusCode.Created, crearRes.StatusCode);
         var pozoBody = await Body(crearRes);
@@ -167,10 +168,10 @@ public class RealDeploymentE2ETests
         Assert.Equal(0, pozoBody.GetProperty("montoRecaudado").GetDecimal());
         Assert.Equal(500000.50m, pozoBody.GetProperty("montoObjetivo").GetDecimal());
 
-        // 3) aparece en el listado publico
+        // 3) al ser un pozo de prueba (esDatoDePrueba), NO aparece en el listado publico
         var listaConPozoRes = await httpPublico.GetAsync("pozos");
         var listaConPozoBody = await Body(listaConPozoRes);
-        Assert.Contains(listaConPozoBody.EnumerateArray(), p => p.GetProperty("id").GetString() == pozoId);
+        Assert.DoesNotContain(listaConPozoBody.EnumerateArray(), p => p.GetProperty("id").GetString() == pozoId);
 
         // 4) GET /pozos/{id} (autenticado), sin inversiones todavia
         var detalleRes = await httpAdmin.GetAsync($"pozos/{pozoId}");
@@ -286,6 +287,7 @@ public class RealDeploymentE2ETests
             titulo = $"Pozo E2E sin vender {Guid.NewGuid():N}",
             autoDescripcion = "sin vender",
             montoObjetivo = 1000m,
+            esDatoDePrueba = true,
         });
         var otroPozoId = (await Body(otroPozoRes)).GetProperty("id").GetString();
         var repartoNoVendidoRes = await httpAdmin.GetAsync($"pozos/{otroPozoId}/reparto");

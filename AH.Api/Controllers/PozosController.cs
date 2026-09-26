@@ -25,6 +25,7 @@ public class PozosController : ControllerBase
     public async Task<IActionResult> Listar()
     {
         var pozos = await _context.Pozos
+            .Where(p => !p.EsDatoDePrueba)
             .OrderByDescending(p => p.FechaCreacion)
             .Select(p => new
             {
@@ -90,7 +91,7 @@ public class PozosController : ControllerBase
         });
     }
 
-    public record CrearPozoDto(string Titulo, string AutoDescripcion, decimal MontoObjetivo, string? ImagenUrl = null, decimal? PrecioVentaEstimado = null);
+    public record CrearPozoDto(string Titulo, string AutoDescripcion, decimal MontoObjetivo, string? ImagenUrl = null, decimal? PrecioVentaEstimado = null, bool EsDatoDePrueba = false);
 
     /// <summary>
     /// Alta de un pozo nuevo, arranca siempre en estado Abierto y sin nada recaudado.
@@ -114,6 +115,7 @@ public class PozosController : ControllerBase
             Estado = "Abierto",
             ImagenUrl = string.IsNullOrWhiteSpace(dto.ImagenUrl) ? null : dto.ImagenUrl.Trim(),
             PrecioVentaEstimado = dto.PrecioVentaEstimado,
+            EsDatoDePrueba = dto.EsDatoDePrueba,
         };
 
         _context.Pozos.Add(pozo);

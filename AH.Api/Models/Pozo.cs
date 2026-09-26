@@ -40,4 +40,10 @@ public class Pozo
     /// se venda de verdad.
     /// </summary>
     public decimal? PrecioVentaEstimado { get; set; }
+
+    /// <summary>
+    /// Marca los pozos creados por RealDeploymentE2ETests contra el deployment
+    /// real, para que el listado publico los excluya (no son autos de verdad).
+    /// </summary>
+    public bool EsDatoDePrueba { get; set; }
 }
