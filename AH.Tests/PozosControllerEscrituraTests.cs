@@ -119,6 +119,26 @@ public class PozosControllerEscrituraTests
         Assert.Null(pozo.PrecioVentaEstimado);
     }
 
+    [Fact]
+    public async Task Crear_ConEsDatoDePruebaTrue_LoPersisteYNoLoDevuelveEnElJson()
+    {
+        var (ctrl, db) = Build();
+
+        var dto = new PozosController.CrearPozoDto(
+            "Pozo E2E de prueba",
+            "descripcion",
+            2500000m,
+            EsDatoDePrueba: true);
+        var res = await ctrl.Crear(dto);
+
+        var created = Assert.IsType<ObjectResult>(res);
+        Assert.Equal(201, created.StatusCode);
+        Assert.Null(created.Value!.GetType().GetProperty("esDatoDePrueba"));
+
+        var pozo = Assert.Single(db.Pozos);
+        Assert.True(pozo.EsDatoDePrueba);
+    }
+
     // ---- PUT /api/pozos/{id} ----
 
     [Fact]
