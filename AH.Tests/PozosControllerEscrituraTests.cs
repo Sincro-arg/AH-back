@@ -82,6 +82,43 @@ public class PozosControllerEscrituraTests
         Assert.Empty(db.Pozos);
     }
 
+    [Fact]
+    public async Task Crear_ConImagenUrlYPrecioVentaEstimado_LosPersisteYLosDevuelve()
+    {
+        var (ctrl, db) = Build();
+
+        var dto = new PozosController.CrearPozoDto(
+            "Peugeot 208 2020",
+            "Peugeot 208 2020, nafta.",
+            2500000m,
+            ImagenUrl: "https://cdn.example.com/auto.jpg",
+            PrecioVentaEstimado: 3200000m);
+        var res = await ctrl.Crear(dto);
+
+        var created = Assert.IsType<ObjectResult>(res);
+        Assert.Equal(201, created.StatusCode);
+        Assert.Equal("https://cdn.example.com/auto.jpg", GetProp(created.Value!, "imagenUrl"));
+        Assert.Equal(3200000m, GetProp(created.Value!, "precioVentaEstimado"));
+
+        var pozo = Assert.Single(db.Pozos);
+        Assert.Equal("https://cdn.example.com/auto.jpg", pozo.ImagenUrl);
+        Assert.Equal(3200000m, pozo.PrecioVentaEstimado);
+    }
+
+    [Fact]
+    public async Task Crear_SinImagenUrlNiPrecioVentaEstimado_QuedanEnNull()
+    {
+        var (ctrl, db) = Build();
+
+        var dto = new PozosController.CrearPozoDto("Peugeot 208 2020", "Peugeot 208 2020, nafta.", 2500000m);
+        var res = await ctrl.Crear(dto);
+
+        Assert.IsType<ObjectResult>(res);
+        var pozo = Assert.Single(db.Pozos);
+        Assert.Null(pozo.ImagenUrl);
+        Assert.Null(pozo.PrecioVentaEstimado);
+    }
+
     // ---- PUT /api/pozos/{id} ----
 
     [Fact]
@@ -100,6 +137,47 @@ public class PozosControllerEscrituraTests
         var actualizado = await db.Pozos.FindAsync(pozo.Id);
         Assert.Equal("Fiat Cronos 2022", actualizado!.Titulo);
         Assert.Equal(3500000m, actualizado.MontoObjetivo);
+    }
+
+    [Fact]
+    public async Task Actualizar_ConImagenUrlYPrecioVentaEstimado_LosPersisteYLosDevuelve()
+    {
+        var (ctrl, db) = Build();
+        var pozo = SeedPozo(db);
+
+        var dto = new PozosController.ActualizarPozoDto(
+            "Fiat Cronos 2022",
+            "Otra descripcion",
+            3500000m,
+            ImagenUrl: "https://cdn.example.com/cronos.jpg",
+            PrecioVentaEstimado: 4100000m);
+        var res = await ctrl.Actualizar(pozo.Id, dto);
+
+        var ok = Assert.IsType<OkObjectResult>(res);
+        Assert.Equal("https://cdn.example.com/cronos.jpg", GetProp(ok.Value!, "imagenUrl"));
+        Assert.Equal(4100000m, GetProp(ok.Value!, "precioVentaEstimado"));
+
+        var actualizado = await db.Pozos.FindAsync(pozo.Id);
+        Assert.Equal("https://cdn.example.com/cronos.jpg", actualizado!.ImagenUrl);
+        Assert.Equal(4100000m, actualizado.PrecioVentaEstimado);
+    }
+
+    [Fact]
+    public async Task Actualizar_ConImagenUrlEnBlanco_LaDejaEnNull()
+    {
+        var (ctrl, db) = Build();
+        var pozo = SeedPozo(db);
+        pozo.ImagenUrl = "https://cdn.example.com/vieja.jpg";
+        pozo.PrecioVentaEstimado = 999999m;
+        db.SaveChanges();
+
+        var dto = new PozosController.ActualizarPozoDto("Fiat Cronos 2022", "Otra descripcion", 3500000m, ImagenUrl: "   ");
+        var res = await ctrl.Actualizar(pozo.Id, dto);
+
+        Assert.IsType<OkObjectResult>(res);
+        var actualizado = await db.Pozos.FindAsync(pozo.Id);
+        Assert.Null(actualizado!.ImagenUrl);
+        Assert.Null(actualizado.PrecioVentaEstimado);
     }
 
     [Fact]
