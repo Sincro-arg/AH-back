@@ -2,6 +2,8 @@ using System.Linq;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using AH.Api.Data;
+using Microsoft.EntityFrameworkCore;
 using Xunit;
 
 namespace AH.Tests;
@@ -25,6 +27,29 @@ public class RealDeploymentE2ETests
     private static async Task<JsonElement> Body(HttpResponseMessage res) =>
         (await res.Content.ReadFromJsonAsync<JsonElement>());
 
+    // Borra directo contra Postgres (no por la API: un pozo Vendido o con
+    // inversiones no se puede eliminar via DELETE) los datos que dejan estos
+    // tests en la base REAL. Usa la misma variable de entorno que Program.cs
+    // ("ConnectionStrings__DefaultConnection"); si no esta seteada en el
+    // entorno donde corre "dotnet test", la limpieza no hace nada (las
+    // aserciones del test no dependen de esto).
+    private static async Task LimpiarAsync(Guid[]? inversionIds = null, Guid[]? pozoIds = null, Guid[]? usuarioIds = null)
+    {
+        var connStr = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
+        if (string.IsNullOrWhiteSpace(connStr)) return;
+
+        var options = new DbContextOptionsBuilder<AppDbContext>().UseNpgsql(connStr).Options;
+        await using var db = new AppDbContext(options);
+
+        // Orden importa: Inversion tiene FK Restrict hacia Pozo y Usuario.
+        if (inversionIds is { Length: > 0 })
+            await db.Inversiones.Where(i => inversionIds.Contains(i.Id)).ExecuteDeleteAsync();
+        if (pozoIds is { Length: > 0 })
+            await db.Pozos.Where(p => pozoIds.Contains(p.Id)).ExecuteDeleteAsync();
+        if (usuarioIds is { Length: > 0 })
+            await db.Usuarios.Where(u => usuarioIds.Contains(u.Id)).ExecuteDeleteAsync();
+    }
+
     [Fact]
     public async Task FlujoCompleto_RegistroLoginPerfilPasswordTemaYAdminSembrado()
     {
@@ -32,7 +57,10 @@ public class RealDeploymentE2ETests
         var email = $"e2e-{Guid.NewGuid():N}@example.com";
         const string passwordInicial = "PasswordInicial1";
         const string passwordNueva = "PasswordNueva1";
+        Guid? usuarioId = null;
 
+        try
+        {
         // 1) Registro
         var registerRes = await http.PostAsJsonAsync("auth/register", new
         {
@@ -56,6 +84,7 @@ public class RealDeploymentE2ETests
         Assert.Equal(email, usuarioLogin.GetProperty("email").GetString());
         Assert.Equal("claro", usuarioLogin.GetProperty("tema").GetString());
         var id = usuarioLogin.GetProperty("id").GetString();
+        usuarioId = Guid.Parse(id!);
 
         // 3) GET /usuarios/me
         http.DefaultRequestHeaders.Authorization = new("Bearer", token);
@@ -122,6 +151,12 @@ public class RealDeploymentE2ETests
         Assert.Equal(HttpStatusCode.OK, adminMeRes.StatusCode);
         var adminMeBody = await Body(adminMeRes);
         Assert.Equal("admin@cuentas.com", adminMeBody.GetProperty("email").GetString());
+        }
+        finally
+        {
+            // El usuario admin sembrado no se toca: solo se borra el que crea este test.
+            await LimpiarAsync(usuarioIds: usuarioId is Guid uid ? new[] { uid } : null);
+        }
     }
 
     // Tarea 656: Pozos e Inversiones son nuevos y el resto de la suite los
@@ -133,6 +168,13 @@ public class RealDeploymentE2ETests
     public async Task FlujoCompleto_PozosEInversiones()
     {
         using var httpAdmin = CrearCliente();
+        Guid? pozoIdGuid = null;
+        Guid? otroPozoIdGuid = null;
+        Guid? inversionIdGuid = null;
+        Guid? otroUsuarioId = null;
+
+        try
+        {
         var adminLoginRes = await httpAdmin.PostAsJsonAsync("auth/login", new
         {
             email = "admin@cuentas.com",
@@ -164,6 +206,7 @@ public class RealDeploymentE2ETests
         var pozoBody = await Body(crearRes);
         var pozoId = pozoBody.GetProperty("id").GetString();
         Assert.False(string.IsNullOrWhiteSpace(pozoId));
+        pozoIdGuid = Guid.Parse(pozoId!);
         Assert.Equal("Abierto", pozoBody.GetProperty("estado").GetString());
         Assert.Equal(0, pozoBody.GetProperty("montoRecaudado").GetDecimal());
         Assert.Equal(500000.50m, pozoBody.GetProperty("montoObjetivo").GetDecimal());
@@ -189,6 +232,7 @@ public class RealDeploymentE2ETests
         Assert.Equal(HttpStatusCode.Created, invRes.StatusCode);
         var invBody = await Body(invRes);
         var inversionId = invBody.GetProperty("id").GetString();
+        inversionIdGuid = Guid.Parse(inversionId!);
         Assert.Equal(pozoId, invBody.GetProperty("pozoId").GetString());
         Assert.Equal(montoInvertido, invBody.GetProperty("monto").GetDecimal());
 
@@ -215,7 +259,9 @@ public class RealDeploymentE2ETests
             password = "PasswordOtro1",
         });
         var otroLoginRes = await httpOtro.PostAsJsonAsync("auth/login", new { email = otroEmail, password = "PasswordOtro1" });
-        var otroToken = (await Body(otroLoginRes)).GetProperty("token").GetString();
+        var otroLoginBody = await Body(otroLoginRes);
+        var otroToken = otroLoginBody.GetProperty("token").GetString();
+        otroUsuarioId = Guid.Parse(otroLoginBody.GetProperty("usuario").GetProperty("id").GetString()!);
         httpOtro.DefaultRequestHeaders.Authorization = new("Bearer", otroToken);
 
         var editarAjenaRes = await httpOtro.PutAsJsonAsync($"inversiones/{inversionId}", new { monto = 1 });
@@ -290,6 +336,7 @@ public class RealDeploymentE2ETests
             esDatoDePrueba = true,
         });
         var otroPozoId = (await Body(otroPozoRes)).GetProperty("id").GetString();
+        otroPozoIdGuid = Guid.Parse(otroPozoId!);
         var repartoNoVendidoRes = await httpAdmin.GetAsync($"pozos/{otroPozoId}/reparto");
         Assert.Equal(HttpStatusCode.Conflict, repartoNoVendidoRes.StatusCode);
 
@@ -312,5 +359,21 @@ public class RealDeploymentE2ETests
         Assert.Equal(HttpStatusCode.Conflict, editarVendidaRes.StatusCode);
         var borrarVendidaRes = await httpAdmin.DeleteAsync($"inversiones/{inversionId}");
         Assert.Equal(HttpStatusCode.Conflict, borrarVendidaRes.StatusCode);
+        }
+        finally
+        {
+            // El admin sembrado no se toca: solo se borran el pozo Vendido (con
+            // su inversion, que hay que borrar antes por la FK Restrict), el
+            // pozo sobrante del punto 16/17 (ya deberia estar borrado por la
+            // API, pero por si el test corta antes) y el usuario "Otro Inversor".
+            var pozoIds = new List<Guid>();
+            if (pozoIdGuid is Guid pid) pozoIds.Add(pid);
+            if (otroPozoIdGuid is Guid opid) pozoIds.Add(opid);
+
+            await LimpiarAsync(
+                inversionIds: inversionIdGuid is Guid iid ? new[] { iid } : null,
+                pozoIds: pozoIds.Count > 0 ? pozoIds.ToArray() : null,
+                usuarioIds: otroUsuarioId is Guid ouid ? new[] { ouid } : null);
+        }
     }
 }
