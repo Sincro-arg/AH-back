@@ -143,8 +143,8 @@ app.Lifetime.ApplicationStarted.Register(() =>
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         db.Database.Migrate();
         DbSeeder.SeedAdminUsuario(db);
-        DbSeeder.SeedPozos(db);
-        DbSeeder.SeedInversiones(db);
+        var pozoVwGol = DbSeeder.SeedPozos(db);
+        DbSeeder.SeedInversiones(db, pozoVwGol);
     }
     catch (Exception ex)
     {

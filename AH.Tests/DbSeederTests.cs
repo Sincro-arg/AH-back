@@ -1,5 +1,6 @@
 using AH.Api.Controllers;
 using AH.Api.Data;
+using AH.Api.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -129,5 +130,35 @@ public class DbSeederTests
         DbSeeder.SeedPozos(db);
 
         Assert.Equal(3, db.Pozos.Count());
+    }
+
+    [Fact]
+    public void SeedInversiones_NoExplotaConDosPozosDeIgualTitulo_YAsociaLaInversionAlPozoSembradoOriginalmente()
+    {
+        var db = BuildDb();
+        DbSeeder.SeedAdminUsuario(db);
+        var pozoOriginal = DbSeeder.SeedPozos(db);
+        Assert.NotNull(pozoOriginal);
+
+        // Un segundo pozo con el mismo Titulo, cargado por fuera de SeedPozos
+        // (por ejemplo por un usuario), para reproducir la colision que antes
+        // hacia reventar el SingleOrDefault por Titulo dentro de SeedInversiones.
+        db.Pozos.Add(new Pozo
+        {
+            Titulo = "VW Gol Trend 2019",
+            AutoDescripcion = "Otro VW Gol Trend, cargado despues por un usuario.",
+            MontoObjetivo = 1000000m,
+            MontoRecaudado = 500000m,
+            Estado = "Abierto",
+            FechaCreacion = DateTime.UtcNow,
+        });
+        db.SaveChanges();
+        Assert.Equal(2, db.Pozos.Count(p => p.Titulo == "VW Gol Trend 2019"));
+
+        var excepcion = Record.Exception(() => DbSeeder.SeedInversiones(db, pozoOriginal));
+
+        Assert.Null(excepcion);
+        var inversion = Assert.Single(db.Inversiones);
+        Assert.Equal(pozoOriginal!.Id, inversion.PozoId);
     }
 }

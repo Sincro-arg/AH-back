@@ -28,10 +28,29 @@ public static class DbSeeder
 
     // Tres pozos de ejemplo, uno por cada estado, para que la landing y el
     // listado publico tengan datos reales desde el primer arranque.
-    public static void SeedPozos(AppDbContext db)
+    // Devuelve el pozo 'VW Gol Trend 2019' recien creado (o null si los
+    // pozos ya existian de una corrida anterior) para que SeedInversiones lo
+    // reciba por parametro en vez de tener que volver a buscarlo por Titulo:
+    // el Titulo es el nombre del auto y el modelo Pozo no lo restringe a ser
+    // unico, asi que buscarlo con SingleOrDefault podia reventar si en el
+    // futuro dos pozos comparten nombre.
+    public static Pozo? SeedPozos(AppDbContext db)
     {
         if (db.Pozos.Any())
-            return;
+            return null;
+
+        var pozoVwGol = new Pozo
+        {
+            Titulo = "VW Gol Trend 2019",
+            AutoDescripcion = "VW Gol Trend 2019, 62.000 km, nafta, unico dueño.",
+            ImagenUrl = "https://images.unsplash.com/photo-1622278647301-b6b9d9d43cc4?w=800&q=80",
+            MontoObjetivo = 2500000m,
+            MontoRecaudado = 2500000m,
+            Estado = "Comprado",
+            PrecioCompra = 2450000m,
+            FechaCompra = DateTime.UtcNow.AddDays(-10),
+            FechaCreacion = DateTime.UtcNow.AddDays(-30),
+        };
 
         db.Pozos.AddRange(
             new Pozo
@@ -45,18 +64,7 @@ public static class DbSeeder
                 Estado = "Abierto",
                 FechaCreacion = DateTime.UtcNow,
             },
-            new Pozo
-            {
-                Titulo = "VW Gol Trend 2019",
-                AutoDescripcion = "VW Gol Trend 2019, 62.000 km, nafta, unico dueño.",
-                ImagenUrl = "https://images.unsplash.com/photo-1622278647301-b6b9d9d43cc4?w=800&q=80",
-                MontoObjetivo = 2500000m,
-                MontoRecaudado = 2500000m,
-                Estado = "Comprado",
-                PrecioCompra = 2450000m,
-                FechaCompra = DateTime.UtcNow.AddDays(-10),
-                FechaCreacion = DateTime.UtcNow.AddDays(-30),
-            },
+            pozoVwGol,
             new Pozo
             {
                 Titulo = "Toyota Corolla 2018",
@@ -73,28 +81,30 @@ public static class DbSeeder
             }
         );
         db.SaveChanges();
+        return pozoVwGol;
     }
 
     // Una inversion de ejemplo del admin en el pozo 'VW Gol Trend 2019', para
     // que la pantalla "Mis inversiones" no aparezca vacia al entrar con las
     // credenciales de demo. El monto coincide con el MontoRecaudado ya
-    // sembrado en ese pozo (no lo modifica).
-    public static void SeedInversiones(AppDbContext db)
+    // sembrado en ese pozo (no lo modifica). Recibe el pozo por parametro
+    // -el que devolvio SeedPozos- en vez de buscarlo por Titulo, para no
+    // depender de que el Titulo sea unico.
+    public static void SeedInversiones(AppDbContext db, Pozo? pozoVwGol)
     {
         if (db.Inversiones.Any())
             return;
 
         var admin = db.Usuarios.SingleOrDefault(u => u.Email == AdminEmail);
-        var pozo = db.Pozos.SingleOrDefault(p => p.Titulo == "VW Gol Trend 2019");
-        if (admin is null || pozo is null)
+        if (admin is null || pozoVwGol is null)
             return;
 
         db.Inversiones.Add(new Inversion
         {
-            PozoId = pozo.Id,
+            PozoId = pozoVwGol.Id,
             UsuarioId = admin.Id,
-            Monto = pozo.MontoRecaudado,
-            Fecha = pozo.FechaCompra ?? pozo.FechaCreacion,
+            Monto = pozoVwGol.MontoRecaudado,
+            Fecha = pozoVwGol.FechaCompra ?? pozoVwGol.FechaCreacion,
         });
         db.SaveChanges();
     }
