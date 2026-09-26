@@ -108,6 +108,19 @@ public class DbSeederTests
     }
 
     [Fact]
+    public void SeedPozos_LosTresTienenImagenYElAbiertoTienePrecioVentaEstimado()
+    {
+        var db = BuildDb();
+
+        DbSeeder.SeedPozos(db);
+
+        Assert.All(db.Pozos, p => Assert.False(string.IsNullOrWhiteSpace(p.ImagenUrl)));
+
+        var abierto = db.Pozos.Single(p => p.Estado == "Abierto");
+        Assert.NotNull(abierto.PrecioVentaEstimado);
+    }
+
+    [Fact]
     public void SeedPozos_EsIdempotente_NoDuplicaSiSeLlamaDeNuevo()
     {
         var db = BuildDb();
