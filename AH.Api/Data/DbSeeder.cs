@@ -26,54 +26,137 @@ public static class DbSeeder
         db.SaveChanges();
     }
 
-    // Tres pozos de ejemplo, uno por cada estado, para que la demo (y la
-    // landing publica) tengan datos desde el primer arranque.
-    public static void SeedPozos(AppDbContext db)
+    // Siete pozos de ejemplo, con estados variados (Abierto/Comprado/Vendido),
+    // para que la landing, el listado publico y el carrusel de pozos recientes
+    // de la home tengan datos reales y variados desde el primer arranque.
+    // Devuelve el pozo 'VW Gol Trend 2019' recien creado (o null si los
+    // pozos ya existian de una corrida anterior) para que SeedInversiones lo
+    // reciba por parametro en vez de tener que volver a buscarlo por Titulo:
+    // el Titulo es el nombre del auto y el modelo Pozo no lo restringe a ser
+    // unico, asi que buscarlo con SingleOrDefault podia reventar si en el
+    // futuro dos pozos comparten nombre.
+    public static Pozo? SeedPozos(AppDbContext db)
     {
         if (db.Pozos.Any())
-            return;
+            return null;
+
+        var pozoVwGol = new Pozo
+        {
+            Titulo = "VW Gol Trend 2019",
+            AutoDescripcion = "VW Gol Trend 2019, 62.000 km, nafta, unico dueño.",
+            ImagenUrl = "https://images.unsplash.com/photo-1622278647301-b6b9d9d43cc4?w=800&q=80",
+            MontoObjetivo = 2500000m,
+            MontoRecaudado = 2500000m,
+            Estado = "Comprado",
+            PrecioCompra = 2450000m,
+            FechaCompra = DateTime.UtcNow.AddDays(-10),
+            FechaCreacion = DateTime.UtcNow.AddDays(-30),
+        };
 
         db.Pozos.AddRange(
             new Pozo
             {
-                Titulo = "Toyota Corolla 2015",
-                AutoDescripcion = "Toyota Corolla 2015, motor 1.8, muy buen estado general.",
-                MontoObjetivo = 8000000m,
-                MontoRecaudado = 0m,
+                Titulo = "Fiat Cronos 2021",
+                AutoDescripcion = "Fiat Cronos 2021, 45.000 km, nafta, full, unico dueño, ubicado en CABA.",
+                ImagenUrl = "https://images.unsplash.com/photo-1550355191-aa8a80b41353?w=800&q=80",
+                MontoObjetivo = 3000000m,
+                MontoRecaudado = 1200000m,
+                PrecioVentaEstimado = 3800000m,
                 Estado = "Abierto",
-                FechaCreacion = DateTime.UtcNow.AddDays(-3),
-                ImagenUrl = "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=800&q=80",
-                PrecioVentaEstimado = 9200000m,
+                FechaCreacion = DateTime.UtcNow,
             },
+            pozoVwGol,
             new Pozo
             {
-                Titulo = "Volkswagen Gol Trend 2018",
-                AutoDescripcion = "VW Gol Trend 2018, unico dueño, service oficial al dia.",
-                MontoObjetivo = 6000000m,
-                MontoRecaudado = 6000000m,
-                Estado = "Comprado",
-                FechaCreacion = DateTime.UtcNow.AddDays(-20),
-                PrecioCompra = 5800000m,
-                FechaCompra = DateTime.UtcNow.AddDays(-10),
-                ImagenUrl = "https://images.unsplash.com/photo-1541443131876-44b03de101c5?w=800&q=80",
-                PrecioVentaEstimado = 7000000m,
+                Titulo = "Toyota Corolla 2018",
+                AutoDescripcion = "Toyota Corolla 2018, 80.000 km, nafta, service oficial, ubicado en Rosario, Santa Fe.",
+                ImagenUrl = "https://images.unsplash.com/photo-1623869675184-5b8859bcd9c8?w=800&q=80",
+                MontoObjetivo = 4000000m,
+                MontoRecaudado = 4000000m,
+                Estado = "Vendido",
+                PrecioCompra = 3900000m,
+                FechaCompra = DateTime.UtcNow.AddDays(-60),
+                PrecioVenta = 4600000m,
+                FechaVenta = DateTime.UtcNow.AddDays(-5),
+                FechaCreacion = DateTime.UtcNow.AddDays(-90),
             },
             new Pozo
             {
                 Titulo = "Ford Focus 2016",
-                AutoDescripcion = "Ford Focus 2016, nafta, muy cuidado, listo para reventa.",
+                AutoDescripcion = "Ford Focus 2016, motor 2.0 nafta, 95.000 km, muy cuidado, ubicado en Cordoba capital, listo para reventa.",
                 MontoObjetivo = 7000000m,
-                MontoRecaudado = 7000000m,
-                Estado = "Vendido",
-                FechaCreacion = DateTime.UtcNow.AddDays(-45),
-                PrecioCompra = 6700000m,
-                FechaCompra = DateTime.UtcNow.AddDays(-35),
-                PrecioVenta = 8200000m,
-                FechaVenta = DateTime.UtcNow.AddDays(-5),
+                MontoRecaudado = 0m,
+                Estado = "Abierto",
+                FechaCreacion = DateTime.UtcNow.AddDays(-2),
                 ImagenUrl = "https://images.unsplash.com/photo-1494905998402-395d579af36f?w=800&q=80",
                 PrecioVentaEstimado = 8200000m,
+            },
+            new Pozo
+            {
+                Titulo = "Chevrolet Onix 2020",
+                AutoDescripcion = "Chevrolet Onix 2020, 1.2 nafta, 38.000 km, unico dueño, ubicado en La Plata, Buenos Aires.",
+                MontoObjetivo = 5500000m,
+                MontoRecaudado = 2100000m,
+                Estado = "Abierto",
+                FechaCreacion = DateTime.UtcNow.AddDays(-7),
+                ImagenUrl = "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=800&q=80",
+                PrecioVentaEstimado = 6800000m,
+            },
+            new Pozo
+            {
+                Titulo = "Renault Sandero Stepway 2017",
+                AutoDescripcion = "Renault Sandero Stepway 2017, motor 1.6 nafta, 110.000 km, ubicado en Mendoza capital, service al dia.",
+                MontoObjetivo = 4500000m,
+                MontoRecaudado = 4500000m,
+                Estado = "Comprado",
+                FechaCreacion = DateTime.UtcNow.AddDays(-25),
+                PrecioCompra = 4300000m,
+                FechaCompra = DateTime.UtcNow.AddDays(-8),
+                ImagenUrl = "https://images.unsplash.com/photo-1583267746897-2cf415887172?w=800&q=80",
+                PrecioVentaEstimado = 5400000m,
+            },
+            new Pozo
+            {
+                Titulo = "Peugeot 208 2019",
+                AutoDescripcion = "Peugeot 208 2019, 1.6 nafta, 70.000 km, ubicado en Mar del Plata, Buenos Aires, service oficial completo.",
+                MontoObjetivo = 6200000m,
+                MontoRecaudado = 6200000m,
+                Estado = "Vendido",
+                FechaCreacion = DateTime.UtcNow.AddDays(-70),
+                PrecioCompra = 5900000m,
+                FechaCompra = DateTime.UtcNow.AddDays(-50),
+                PrecioVenta = 7100000m,
+                FechaVenta = DateTime.UtcNow.AddDays(-3),
+                ImagenUrl = "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800&q=80",
+                PrecioVentaEstimado = 7100000m,
             }
         );
+        db.SaveChanges();
+        return pozoVwGol;
+    }
+
+    // Una inversion de ejemplo del admin en el pozo 'VW Gol Trend 2019', para
+    // que la pantalla "Mis inversiones" no aparezca vacia al entrar con las
+    // credenciales de demo. El monto coincide con el MontoRecaudado ya
+    // sembrado en ese pozo (no lo modifica). Recibe el pozo por parametro
+    // -el que devolvio SeedPozos- en vez de buscarlo por Titulo, para no
+    // depender de que el Titulo sea unico.
+    public static void SeedInversiones(AppDbContext db, Pozo? pozoVwGol)
+    {
+        if (db.Inversiones.Any())
+            return;
+
+        var admin = db.Usuarios.SingleOrDefault(u => u.Email == AdminEmail);
+        if (admin is null || pozoVwGol is null)
+            return;
+
+        db.Inversiones.Add(new Inversion
+        {
+            PozoId = pozoVwGol.Id,
+            UsuarioId = admin.Id,
+            Monto = pozoVwGol.MontoRecaudado,
+            Fecha = pozoVwGol.FechaCompra ?? pozoVwGol.FechaCreacion,
+        });
         db.SaveChanges();
     }
 }

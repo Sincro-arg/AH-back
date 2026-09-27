@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace AH.Api.Migrations
 {
     /// <inheritdoc />
-    public partial class AgregarImagenYPrecioVentaEstimadoAPozos : Migration
+    public partial class AgregarImagenYPrecioEstimadoAPozo : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -14,7 +14,8 @@ namespace AH.Api.Migrations
             migrationBuilder.AddColumn<string>(
                 name: "ImagenUrl",
                 table: "Pozos",
-                type: "text",
+                type: "character varying(500)",
+                maxLength: 500,
                 nullable: true);
 
             migrationBuilder.AddColumn<decimal>(

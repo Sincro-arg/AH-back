@@ -30,7 +30,20 @@ public class Pozo
 
     public DateTime? FechaVenta { get; set; }
 
+    [MaxLength(500)]
     public string? ImagenUrl { get; set; }
 
+    /// <summary>
+    /// Precio en el que se estima vender el auto una vez comprado. Se carga
+    /// al crear/editar el pozo (mientras sigue Abierto) para que el
+    /// inversor pueda calcular su ganancia proyectada antes de que el pozo
+    /// se venda de verdad.
+    /// </summary>
     public decimal? PrecioVentaEstimado { get; set; }
+
+    /// <summary>
+    /// Marca los pozos creados por RealDeploymentE2ETests contra el deployment
+    /// real, para que el listado publico los excluya (no son autos de verdad).
+    /// </summary>
+    public bool EsDatoDePrueba { get; set; }
 }

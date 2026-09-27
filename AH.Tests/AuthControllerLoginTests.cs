@@ -4,13 +4,14 @@ using AH.Api.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using System.IdentityModel.Tokens.Jwt;
 using Xunit;
 
 namespace AH.Tests;
 
 public class AuthControllerLoginTests
 {
-    private static (AuthController ctrl, AppDbContext db) Build()
+    private static (AuthController ctrl, AppDbContext db) Build(string expireHours = "8")
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseInMemoryDatabase($"login-{Guid.NewGuid()}")
@@ -22,7 +23,7 @@ public class AuthControllerLoginTests
                 ["Jwt:Key"] = "clave-de-test-super-larga-para-firmar-1234567890",
                 ["Jwt:Issuer"] = "AH.Api.Test",
                 ["Jwt:Audience"] = "AH.App.Test",
-                ["Jwt:ExpireHours"] = "8",
+                ["Jwt:ExpireHours"] = expireHours,
             })
             .Build();
         var ctrl = new AuthController(db, config);
@@ -70,6 +71,29 @@ public class AuthControllerLoginTests
         Assert.Equal(usuario.Tema, GetProp(usuarioDto!, "tema"));
         Assert.False(string.IsNullOrWhiteSpace(GetProp(usuarioDto!, "fechaAlta") as string));
         Assert.Equal(usuario.NotificacionesEmail, GetProp(usuarioDto!, "notificacionesEmail"));
+    }
+
+    [Fact]
+    public async Task LoginCorrecto_TokenExpiraA24HsSegunPliego()
+    {
+        const int expireHours = 24;
+        var (ctrl, db) = Build(expireHours.ToString());
+        var usuario = SeedUsuario(db);
+        var antesDeLoguear = DateTime.UtcNow;
+
+        var res = await ctrl.Login(new AuthController.LoginDto(usuario.Email, "unaPassword1"));
+
+        var ok = Assert.IsType<OkObjectResult>(res);
+        var token = GetProp(ok.Value!, "token") as string;
+        Assert.False(string.IsNullOrWhiteSpace(token));
+
+        var jwt = new JwtSecurityTokenHandler().ReadJwtToken(token);
+        var exp = jwt.ValidTo;
+
+        var expiracionEsperada = antesDeLoguear.AddHours(expireHours);
+        Assert.True(
+            Math.Abs((exp - expiracionEsperada).TotalSeconds) < 5,
+            $"Se esperaba que el token expire ~{expiracionEsperada:o} (ExpireHours={expireHours}), pero expira {exp:o}");
     }
 
     [Fact]

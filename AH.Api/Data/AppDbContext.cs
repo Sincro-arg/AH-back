@@ -13,10 +13,24 @@ public class AppDbContext : DbContext
 
     public DbSet<Pozo> Pozos => Set<Pozo>();
 
+    public DbSet<Inversion> Inversiones => Set<Inversion>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Usuario>()
             .HasIndex(u => u.Email)
             .IsUnique();
+
+        modelBuilder.Entity<Inversion>()
+            .HasOne(i => i.Pozo)
+            .WithMany()
+            .HasForeignKey(i => i.PozoId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<Inversion>()
+            .HasOne(i => i.Usuario)
+            .WithMany()
+            .HasForeignKey(i => i.UsuarioId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
