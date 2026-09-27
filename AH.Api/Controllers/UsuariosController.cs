@@ -215,6 +215,7 @@ public class UsuariosController : ControllerBase
                 id = x.i.Id.ToString(),
                 pozoId = x.i.PozoId.ToString(),
                 tituloPozo = x.p.Titulo,
+                autoDescripcion = x.p.AutoDescripcion,
                 estadoPozo = x.p.Estado,
                 monto = x.i.Monto,
                 fecha = x.i.Fecha.ToString("o"),
