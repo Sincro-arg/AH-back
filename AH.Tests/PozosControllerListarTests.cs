@@ -20,7 +20,7 @@ public class PozosControllerListarTests
         return (ctrl, db);
     }
 
-    private static Pozo SeedPozo(AppDbContext db, string titulo, string estado = "Abierto", bool esDatoDePrueba = false)
+    private static Pozo SeedPozo(AppDbContext db, string titulo, string estado = "Abierto", bool esDatoDePrueba = false, string? imagenUrl = null, decimal? precioVentaEstimado = null)
     {
         var pozo = new Pozo
         {
@@ -30,6 +30,8 @@ public class PozosControllerListarTests
             MontoRecaudado = 1200000m,
             Estado = estado,
             EsDatoDePrueba = esDatoDePrueba,
+            ImagenUrl = imagenUrl,
+            PrecioVentaEstimado = precioVentaEstimado,
         };
         db.Pozos.Add(pozo);
         db.SaveChanges();
@@ -77,6 +79,22 @@ public class PozosControllerListarTests
         var lista = (ok.Value as System.Collections.IEnumerable)!.Cast<object>().ToList();
         Assert.Single(lista);
         Assert.Equal(pozoReal.Id.ToString(), GetProp(lista[0], "id"));
+    }
+
+    [Fact]
+    public async Task ConImagenUrlYPrecioVentaEstimadoCargados_LosDevuelveEnElListado()
+    {
+        var (ctrl, db) = Build();
+        var pozo = SeedPozo(db, "Fiat Cronos 2021", imagenUrl: "https://cdn.example.com/cronos.jpg", precioVentaEstimado: 5500000m);
+
+        var res = await ctrl.Listar();
+
+        var ok = Assert.IsType<OkObjectResult>(res);
+        var lista = (ok.Value as System.Collections.IEnumerable)!.Cast<object>().ToList();
+        var item = lista.Single(o => (string)GetProp(o, "id")! == pozo.Id.ToString());
+
+        Assert.Equal("https://cdn.example.com/cronos.jpg", GetProp(item, "imagenUrl"));
+        Assert.Equal(5500000m, GetProp(item, "precioVentaEstimado"));
     }
 
     [Fact]
