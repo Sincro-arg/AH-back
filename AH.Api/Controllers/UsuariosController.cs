@@ -217,6 +217,7 @@ public class UsuariosController : ControllerBase
                 tituloPozo = x.p.Titulo,
                 autoDescripcion = x.p.AutoDescripcion,
                 estadoPozo = x.p.Estado,
+                imagenUrl = x.p.ImagenUrl,
                 monto = x.i.Monto,
                 fecha = x.i.Fecha.ToString("o"),
                 gananciaCorrespondiente = x.p.Estado == "Vendido" && x.p.MontoRecaudado != 0
