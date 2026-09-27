@@ -50,6 +50,7 @@ public static class DbSeeder
             PrecioCompra = 2450000m,
             FechaCompra = DateTime.UtcNow.AddDays(-10),
             FechaCreacion = DateTime.UtcNow.AddDays(-30),
+            ImagenUrl = "https://cdn.example.com/pozos/vw-gol-trend-2019.jpg",
         };
 
         db.Pozos.AddRange(
@@ -62,6 +63,7 @@ public static class DbSeeder
                 PrecioVentaEstimado = 3800000m,
                 Estado = "Abierto",
                 FechaCreacion = DateTime.UtcNow,
+                ImagenUrl = "https://cdn.example.com/pozos/fiat-cronos-2021.jpg",
             },
             pozoVwGol,
             new Pozo
@@ -76,6 +78,7 @@ public static class DbSeeder
                 PrecioVenta = 4600000m,
                 FechaVenta = DateTime.UtcNow.AddDays(-5),
                 FechaCreacion = DateTime.UtcNow.AddDays(-90),
+                ImagenUrl = "https://cdn.example.com/pozos/toyota-corolla-2018.jpg",
             },
             new Pozo
             {
@@ -86,6 +89,7 @@ public static class DbSeeder
                 Estado = "Abierto",
                 FechaCreacion = DateTime.UtcNow.AddDays(-2),
                 PrecioVentaEstimado = 8200000m,
+                ImagenUrl = "https://cdn.example.com/pozos/ford-focus-2016.jpg",
             },
             new Pozo
             {
@@ -96,6 +100,7 @@ public static class DbSeeder
                 Estado = "Abierto",
                 FechaCreacion = DateTime.UtcNow.AddDays(-7),
                 PrecioVentaEstimado = 6800000m,
+                ImagenUrl = "https://cdn.example.com/pozos/chevrolet-onix-2020.jpg",
             },
             new Pozo
             {
@@ -108,6 +113,7 @@ public static class DbSeeder
                 PrecioCompra = 4300000m,
                 FechaCompra = DateTime.UtcNow.AddDays(-8),
                 PrecioVentaEstimado = 5400000m,
+                ImagenUrl = "https://cdn.example.com/pozos/renault-sandero-stepway-2017.jpg",
             },
             new Pozo
             {
@@ -122,6 +128,7 @@ public static class DbSeeder
                 PrecioVenta = 7100000m,
                 FechaVenta = DateTime.UtcNow.AddDays(-3),
                 PrecioVentaEstimado = 7100000m,
+                ImagenUrl = "https://cdn.example.com/pozos/peugeot-208-2019.jpg",
             }
         );
         db.SaveChanges();
