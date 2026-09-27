@@ -44,7 +44,6 @@ public static class DbSeeder
         {
             Titulo = "VW Gol Trend 2019",
             AutoDescripcion = "VW Gol Trend 2019, 62.000 km, nafta, unico dueño.",
-            ImagenUrl = "https://images.unsplash.com/photo-1622278647301-b6b9d9d43cc4?w=800&q=80",
             MontoObjetivo = 2500000m,
             MontoRecaudado = 2500000m,
             Estado = "Comprado",
@@ -58,7 +57,6 @@ public static class DbSeeder
             {
                 Titulo = "Fiat Cronos 2021",
                 AutoDescripcion = "Fiat Cronos 2021, 45.000 km, nafta, full, unico dueño, ubicado en CABA.",
-                ImagenUrl = "https://images.unsplash.com/photo-1550355191-aa8a80b41353?w=800&q=80",
                 MontoObjetivo = 3000000m,
                 MontoRecaudado = 1200000m,
                 PrecioVentaEstimado = 3800000m,
@@ -70,7 +68,6 @@ public static class DbSeeder
             {
                 Titulo = "Toyota Corolla 2018",
                 AutoDescripcion = "Toyota Corolla 2018, 80.000 km, nafta, service oficial, ubicado en Rosario, Santa Fe.",
-                ImagenUrl = "https://images.unsplash.com/photo-1623869675184-5b8859bcd9c8?w=800&q=80",
                 MontoObjetivo = 4000000m,
                 MontoRecaudado = 4000000m,
                 Estado = "Vendido",
@@ -88,7 +85,6 @@ public static class DbSeeder
                 MontoRecaudado = 0m,
                 Estado = "Abierto",
                 FechaCreacion = DateTime.UtcNow.AddDays(-2),
-                ImagenUrl = "https://images.unsplash.com/photo-1494905998402-395d579af36f?w=800&q=80",
                 PrecioVentaEstimado = 8200000m,
             },
             new Pozo
@@ -99,7 +95,6 @@ public static class DbSeeder
                 MontoRecaudado = 2100000m,
                 Estado = "Abierto",
                 FechaCreacion = DateTime.UtcNow.AddDays(-7),
-                ImagenUrl = "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=800&q=80",
                 PrecioVentaEstimado = 6800000m,
             },
             new Pozo
@@ -112,7 +107,6 @@ public static class DbSeeder
                 FechaCreacion = DateTime.UtcNow.AddDays(-25),
                 PrecioCompra = 4300000m,
                 FechaCompra = DateTime.UtcNow.AddDays(-8),
-                ImagenUrl = "https://images.unsplash.com/photo-1583267746897-2cf415887172?w=800&q=80",
                 PrecioVentaEstimado = 5400000m,
             },
             new Pozo
@@ -127,7 +121,6 @@ public static class DbSeeder
                 FechaCompra = DateTime.UtcNow.AddDays(-50),
                 PrecioVenta = 7100000m,
                 FechaVenta = DateTime.UtcNow.AddDays(-3),
-                ImagenUrl = "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800&q=80",
                 PrecioVentaEstimado = 7100000m,
             }
         );
