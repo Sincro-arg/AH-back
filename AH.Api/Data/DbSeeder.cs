@@ -26,9 +26,10 @@ public static class DbSeeder
         db.SaveChanges();
     }
 
-    // Siete pozos de ejemplo, con estados variados (Abierto/Comprado/Vendido),
-    // para que la landing, el listado publico y el carrusel de pozos recientes
-    // de la home tengan datos reales y variados desde el primer arranque.
+    // 21 pozos de ejemplo (13 Abierto, 4 Comprado, 4 Vendido), con estados
+    // variados, para que la landing, el listado publico y el carrusel de
+    // pozos recientes de la home tengan datos reales y variados desde el
+    // primer arranque.
     // Devuelve el pozo 'VW Gol Trend 2019' recien creado (o null si los
     // pozos ya existian de una corrida anterior) para que SeedInversiones lo
     // reciba por parametro en vez de tener que volver a buscarlo por Titulo:
