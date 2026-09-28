@@ -162,7 +162,40 @@ public class DbSeederTests
         var excepcion = Record.Exception(() => DbSeeder.SeedInversiones(db, pozoOriginal));
 
         Assert.Null(excepcion);
-        var inversion = Assert.Single(db.Inversiones);
-        Assert.Equal(pozoOriginal!.Id, inversion.PozoId);
+        Assert.Equal(6, db.Inversiones.Count());
+        Assert.Contains(db.Inversiones, i => i.PozoId == pozoOriginal!.Id);
+
+        var pozoDuplicadoId = db.Pozos.Single(p => p.Titulo == "VW Gol Trend 2019" && p.Id != pozoOriginal!.Id).Id;
+        Assert.DoesNotContain(db.Inversiones, i => i.PozoId == pozoDuplicadoId);
+    }
+
+    [Fact]
+    public void SeedInversiones_EsIdempotente_NoDuplicaSiSeLlamaDeNuevo()
+    {
+        var db = BuildDb();
+        DbSeeder.SeedAdminUsuario(db);
+        var pozoVwGol = DbSeeder.SeedPozos(db);
+
+        DbSeeder.SeedInversiones(db, pozoVwGol);
+        DbSeeder.SeedInversiones(db, pozoVwGol);
+
+        Assert.Equal(6, db.Inversiones.Count());
+    }
+
+    [Fact]
+    public void SeedInversiones_TodasApuntanAPozosValidosYNoSuperanElMontoRecaudado()
+    {
+        var db = BuildDb();
+        DbSeeder.SeedAdminUsuario(db);
+        var pozoVwGol = DbSeeder.SeedPozos(db);
+
+        DbSeeder.SeedInversiones(db, pozoVwGol);
+
+        Assert.All(db.Inversiones, inversion =>
+        {
+            var pozo = db.Pozos.SingleOrDefault(p => p.Id == inversion.PozoId);
+            Assert.NotNull(pozo);
+            Assert.True(inversion.Monto <= pozo!.MontoRecaudado);
+        });
     }
 }

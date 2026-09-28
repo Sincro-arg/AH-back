@@ -301,28 +301,60 @@ public static class DbSeeder
         return pozoVwGol;
     }
 
-    // Una inversion de ejemplo del admin en el pozo 'VW Gol Trend 2019', para
-    // que la pantalla "Mis inversiones" no aparezca vacia al entrar con las
-    // credenciales de demo. El monto coincide con el MontoRecaudado ya
-    // sembrado en ese pozo (no lo modifica). Recibe el pozo por parametro
-    // -el que devolvio SeedPozos- en vez de buscarlo por Titulo, para no
-    // depender de que el Titulo sea unico.
+    // Varias inversiones de ejemplo del admin, en pozos con estados distintos
+    // (Abierto/Comprado/Vendido), para que la pantalla "Mis inversiones" se
+    // vea con varias tarjetas al entrar con las credenciales de demo en vez
+    // de una sola. La primera (VW Gol Trend 2019) recibe el pozo por
+    // parametro -el que devolvio SeedPozos- en vez de buscarlo por Titulo,
+    // para no depender de que el Titulo sea unico; las demas se buscan por
+    // Titulo con FirstOrDefault (no SingleOrDefault) por la misma razon.
+    // Cada Monto es la mitad del MontoRecaudado ya sembrado en ese pozo (no
+    // lo modifica ni lo supera) y cada Fecha es posterior a la FechaCreacion
+    // del pozo.
     public static void SeedInversiones(AppDbContext db, Pozo? pozoVwGol)
     {
         if (db.Inversiones.Any())
             return;
 
         var admin = db.Usuarios.SingleOrDefault(u => u.Email == AdminEmail);
-        if (admin is null || pozoVwGol is null)
+        if (admin is null)
             return;
 
-        db.Inversiones.Add(new Inversion
+        var inversiones = new List<Inversion>();
+
+        if (pozoVwGol is not null)
         {
-            PozoId = pozoVwGol.Id,
-            UsuarioId = admin.Id,
-            Monto = pozoVwGol.MontoRecaudado,
-            Fecha = pozoVwGol.FechaCompra ?? pozoVwGol.FechaCreacion,
-        });
+            inversiones.Add(new Inversion
+            {
+                PozoId = pozoVwGol.Id,
+                UsuarioId = admin.Id,
+                Monto = pozoVwGol.MontoRecaudado,
+                Fecha = pozoVwGol.FechaCompra ?? pozoVwGol.FechaCreacion,
+            });
+        }
+
+        void AgregarSiExiste(string titulo, int diasDespuesDeCreado)
+        {
+            var pozo = db.Pozos.FirstOrDefault(p => p.Titulo == titulo);
+            if (pozo is null)
+                return;
+
+            inversiones.Add(new Inversion
+            {
+                PozoId = pozo.Id,
+                UsuarioId = admin.Id,
+                Monto = pozo.MontoRecaudado / 2,
+                Fecha = pozo.FechaCreacion.AddDays(diasDespuesDeCreado),
+            });
+        }
+
+        AgregarSiExiste("Fiat Cronos 2021", 0);
+        AgregarSiExiste("Chevrolet Onix 2020", 1);
+        AgregarSiExiste("Renault Sandero Stepway 2017", 2);
+        AgregarSiExiste("Peugeot 208 2019", 3);
+        AgregarSiExiste("Honda Civic 2020", 0);
+
+        db.Inversiones.AddRange(inversiones);
         db.SaveChanges();
     }
 }
