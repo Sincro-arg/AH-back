@@ -68,16 +68,16 @@ public class DbSeederTests
     }
 
     [Fact]
-    public void SeedPozos_CreaTrecePozosDeEjemploConEstadosVariados()
+    public void SeedPozos_CreaPozosDeEjemploConEstadosVariados()
     {
         var db = BuildDb();
 
         DbSeeder.SeedPozos(db);
 
-        Assert.Equal(13, db.Pozos.Count());
-        Assert.Equal(9, db.Pozos.Count(p => p.Estado == "Abierto"));
-        Assert.Equal(2, db.Pozos.Count(p => p.Estado == "Comprado"));
-        Assert.Equal(2, db.Pozos.Count(p => p.Estado == "Vendido"));
+        Assert.Equal(21, db.Pozos.Count());
+        Assert.Equal(13, db.Pozos.Count(p => p.Estado == "Abierto"));
+        Assert.Equal(4, db.Pozos.Count(p => p.Estado == "Comprado"));
+        Assert.Equal(4, db.Pozos.Count(p => p.Estado == "Vendido"));
     }
 
     [Fact]
@@ -133,7 +133,7 @@ public class DbSeederTests
         DbSeeder.SeedPozos(db);
         DbSeeder.SeedPozos(db);
 
-        Assert.Equal(13, db.Pozos.Count());
+        Assert.Equal(21, db.Pozos.Count());
     }
 
     [Fact]
