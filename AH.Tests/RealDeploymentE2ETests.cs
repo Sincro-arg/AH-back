@@ -344,15 +344,18 @@ public class RealDeploymentE2ETests
         var eliminarOtroPozoRes = await httpAdmin.DeleteAsync($"pozos/{otroPozoId}");
         Assert.Equal(HttpStatusCode.NoContent, eliminarOtroPozoRes.StatusCode);
 
-        // 18) GET /usuarios/me/inversiones refleja la ganancia del pozo ya vendido
-        var misInversionesRes = await httpAdmin.GetAsync("usuarios/me/inversiones");
-        Assert.Equal(HttpStatusCode.OK, misInversionesRes.StatusCode);
-        var misInversionesBody = await Body(misInversionesRes);
-        var miInversion = misInversionesBody.EnumerateArray()
+        // 18) GET /pozos/{id}/inversiones sigue listando la inversion tras la
+        // venta (a diferencia de /usuarios/me/inversiones, que a proposito
+        // excluye los pozos de dato de prueba: ver
+        // UsuariosControllerMeTests.GetMisInversiones_ExcluyeInversionesEnPozosDeDatoDePrueba).
+        // La ganancia repartida ya quedo confirmada en el paso 15 via
+        // /pozos/{id}/reparto.
+        var listaInvVendidoRes = await httpAdmin.GetAsync($"pozos/{pozoId}/inversiones");
+        Assert.Equal(HttpStatusCode.OK, listaInvVendidoRes.StatusCode);
+        var listaInvVendidoBody = await Body(listaInvVendidoRes);
+        var miInversion = listaInvVendidoBody.EnumerateArray()
             .First(i => i.GetProperty("id").GetString() == inversionId);
-        Assert.Equal(pozoId, miInversion.GetProperty("pozoId").GetString());
-        Assert.Equal("Vendido", miInversion.GetProperty("estadoPozo").GetString());
-        Assert.Equal(gananciaTotal, miInversion.GetProperty("gananciaCorrespondiente").GetDecimal());
+        Assert.Equal(montoInvertido, miInversion.GetProperty("monto").GetDecimal());
 
         // 19) una inversion en un pozo ya Vendido no se puede editar ni borrar
         var editarVendidaRes = await httpAdmin.PutAsJsonAsync($"inversiones/{inversionId}", new { monto = 1000 });
