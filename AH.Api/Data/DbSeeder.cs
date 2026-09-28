@@ -452,28 +452,35 @@ public static class DbSeeder
 
     // Varias inversiones de ejemplo del admin, en pozos con estados distintos
     // (Abierto/Comprado/Vendido), para que la pantalla "Mis inversiones" se
-    // vea con varias tarjetas al entrar con las credenciales de demo en vez
-    // de una sola. La primera (VW Gol Trend 2019) recibe el pozo por
-    // parametro -el que devolvio SeedPozos- en vez de buscarlo por Titulo,
-    // para no depender de que el Titulo sea unico; las demas se buscan por
-    // Titulo con FirstOrDefault (no SingleOrDefault) por la misma razon.
-    // Cada Monto es la mitad del MontoRecaudado ya sembrado en ese pozo (no
-    // lo modifica ni lo supera) y cada Fecha es posterior a la FechaCreacion
-    // del pozo.
+    // vea con una grilla de varias tarjetas al entrar con las credenciales de
+    // demo en vez de una sola. La primera (VW Gol Trend 2019) recibe el pozo
+    // por parametro -el que devolvio SeedPozos- en vez de buscarlo por
+    // Titulo, para no depender de que el Titulo sea unico; las demas se
+    // buscan por Titulo con FirstOrDefault (no SingleOrDefault) por la misma
+    // razon. Cada Monto es la mitad (o el total, para el VW Gol) del
+    // MontoRecaudado ya sembrado en ese pozo (no lo modifica ni lo supera) y
+    // cada Fecha es posterior a la FechaCreacion del pozo.
+    // La siembra es ADITIVA: no corta si ya hay inversiones cargadas (por un
+    // usuario real, o por una corrida anterior con esta misma lista mas
+    // corta). Cada inversion se identifica por el par (UsuarioId, PozoId) -no
+    // hay otro campo natural en el modelo- y solo se agrega si ese admin
+    // todavia no tiene una inversion sembrada en ese pozo, para poder correr
+    // esto varias veces sin duplicar nada.
     public static void SeedInversiones(AppDbContext db, Pozo? pozoVwGol)
     {
-        if (db.Inversiones.Any())
-            return;
-
         var admin = db.Usuarios.SingleOrDefault(u => u.Email == AdminEmail);
         if (admin is null)
             return;
 
-        var inversiones = new List<Inversion>();
+        var nuevas = new List<Inversion>();
 
-        if (pozoVwGol is not null)
+        bool YaExiste(Guid pozoId) =>
+            db.Inversiones.Any(i => i.UsuarioId == admin.Id && i.PozoId == pozoId) ||
+            nuevas.Any(i => i.PozoId == pozoId);
+
+        if (pozoVwGol is not null && !YaExiste(pozoVwGol.Id))
         {
-            inversiones.Add(new Inversion
+            nuevas.Add(new Inversion
             {
                 PozoId = pozoVwGol.Id,
                 UsuarioId = admin.Id,
@@ -482,13 +489,13 @@ public static class DbSeeder
             });
         }
 
-        void AgregarSiExiste(string titulo, int diasDespuesDeCreado)
+        void AgregarSiFalta(string titulo, int diasDespuesDeCreado)
         {
             var pozo = db.Pozos.FirstOrDefault(p => p.Titulo == titulo);
-            if (pozo is null)
+            if (pozo is null || YaExiste(pozo.Id))
                 return;
 
-            inversiones.Add(new Inversion
+            nuevas.Add(new Inversion
             {
                 PozoId = pozo.Id,
                 UsuarioId = admin.Id,
@@ -497,13 +504,41 @@ public static class DbSeeder
             });
         }
 
-        AgregarSiExiste("Fiat Cronos 2021", 0);
-        AgregarSiExiste("Chevrolet Onix 2020", 1);
-        AgregarSiExiste("Renault Sandero Stepway 2017", 2);
-        AgregarSiExiste("Peugeot 208 2019", 3);
-        AgregarSiExiste("Honda Civic 2020", 0);
+        AgregarSiFalta("Fiat Cronos 2021", 0);
+        AgregarSiFalta("Chevrolet Onix 2020", 1);
+        AgregarSiFalta("Renault Sandero Stepway 2017", 2);
+        AgregarSiFalta("Peugeot 208 2019", 3);
+        AgregarSiFalta("Honda Civic 2020", 0);
 
-        db.Inversiones.AddRange(inversiones);
-        db.SaveChanges();
+        // 19 inversiones nuevas mas, en pozos distintos de los 6 de arriba
+        // (VW Gol Trend + los 5 de encima), para que "Mis inversiones" pase
+        // de 6 a 26 tarjetas y se vea como una grilla real en vez de una fila
+        // corta.
+        AgregarSiFalta("Toyota Corolla 2018", 5);
+        AgregarSiFalta("Volkswagen Vento 2018", 1);
+        AgregarSiFalta("Renault Kangoo 2020", 2);
+        AgregarSiFalta("Nissan Kicks 2021", 3);
+        AgregarSiFalta("Ford Ka 2017", 1);
+        AgregarSiFalta("Toyota Hilux 2019", 4);
+        AgregarSiFalta("Citroen C4 Cactus 2020", 2);
+        AgregarSiFalta("Peugeot 308 2015", 5);
+        AgregarSiFalta("Volkswagen Suran 2016", 5);
+        AgregarSiFalta("Fiat Argo 2019", 10);
+        AgregarSiFalta("Renault Duster 2018", 8);
+        AgregarSiFalta("Chevrolet Cruze 2017", 1);
+        AgregarSiFalta("Toyota Etios 2020", 2);
+        AgregarSiFalta("Volkswagen Polo 2022", 0);
+        AgregarSiFalta("Peugeot 3008 2019", 6);
+        AgregarSiFalta("Nissan Versa 2021", 4);
+        AgregarSiFalta("Citroen C3 2018", 3);
+        AgregarSiFalta("Honda HR-V 2020", 10);
+        AgregarSiFalta("Jeep Compass 2018", 12);
+        AgregarSiFalta("Renault Logan 2016", 15);
+
+        if (nuevas.Count > 0)
+        {
+            db.Inversiones.AddRange(nuevas);
+            db.SaveChanges();
+        }
     }
 }

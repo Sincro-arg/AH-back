@@ -218,7 +218,7 @@ public class DbSeederTests
         var excepcion = Record.Exception(() => DbSeeder.SeedInversiones(db, pozoOriginal));
 
         Assert.Null(excepcion);
-        Assert.Equal(6, db.Inversiones.Count());
+        Assert.Equal(26, db.Inversiones.Count());
         Assert.Contains(db.Inversiones, i => i.PozoId == pozoOriginal!.Id);
 
         var pozoDuplicadoId = db.Pozos.Single(p => p.Titulo == "VW Gol Trend 2019" && p.Id != pozoOriginal!.Id).Id;
@@ -235,7 +235,38 @@ public class DbSeederTests
         DbSeeder.SeedInversiones(db, pozoVwGol);
         DbSeeder.SeedInversiones(db, pozoVwGol);
 
-        Assert.Equal(6, db.Inversiones.Count());
+        Assert.Equal(26, db.Inversiones.Count());
+    }
+
+    [Fact]
+    public void SeedInversiones_EsAditiva_CompletaLasQueFaltanSinDuplicarLasQueYaEstaban()
+    {
+        var db = BuildDb();
+        DbSeeder.SeedAdminUsuario(db);
+        var pozoVwGol = DbSeeder.SeedPozos(db);
+        var admin = db.Usuarios.Single(u => u.Email == DbSeeder.AdminEmail);
+
+        // Simula una corrida anterior con la lista vieja mas corta: el admin
+        // ya tenia una inversion en el VW Gol Trend (la primera que carga
+        // SeedInversiones) pero todavia no tenia las demas.
+        db.Inversiones.Add(new Inversion
+        {
+            PozoId = pozoVwGol!.Id,
+            UsuarioId = admin.Id,
+            Monto = pozoVwGol.MontoRecaudado,
+            Fecha = pozoVwGol.FechaCompra ?? pozoVwGol.FechaCreacion,
+        });
+        db.SaveChanges();
+        Assert.Equal(1, db.Inversiones.Count());
+
+        DbSeeder.SeedInversiones(db, pozoVwGol);
+
+        Assert.Equal(26, db.Inversiones.Count());
+        // La que ya estaba no se duplico.
+        Assert.Equal(1, db.Inversiones.Count(i => i.PozoId == pozoVwGol.Id));
+        // Una de las que faltaban se completo.
+        var pozoRenaultLogan = db.Pozos.Single(p => p.Titulo == "Renault Logan 2016");
+        Assert.Equal(1, db.Inversiones.Count(i => i.PozoId == pozoRenaultLogan.Id));
     }
 
     [Fact]
