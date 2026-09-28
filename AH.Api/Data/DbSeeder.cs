@@ -9,6 +9,15 @@ public static class DbSeeder
     public const string AdminEmail = "admin@cuentas.com";
     public const string AdminPassword = "Admin123!";
 
+    // Placeholder de imagen para todos los pozos de ejemplo: la misma
+    // ilustracion SVG de auto naranja que ya usa la home
+    // (AH-front/src/app/components/home/home.html) y que tarjeta-pozo usa
+    // como fallback cuando no hay ImagenUrl o la URL cargada esta rota. Se
+    // sirve como ruta relativa del propio front (AH-front/public/imagenes),
+    // asi que resuelve bien en cualquier entorno sin depender de un dominio
+    // externo como picsum.photos, que devolvia fotos sin relacion con autos.
+    private const string ImagenPlaceholder = "/imagenes/auto-default.svg";
+
     public static void SeedAdminUsuario(AppDbContext db)
     {
         if (db.Usuarios.Any(u => u.Email == AdminEmail))
@@ -63,7 +72,7 @@ public static class DbSeeder
             PrecioCompra = 2450000m,
             FechaCompra = DateTime.UtcNow.AddDays(-10),
             FechaCreacion = DateTime.UtcNow.AddDays(-30),
-            ImagenUrl = "https://picsum.photos/seed/vw-gol-trend-2019/400/300",
+            ImagenUrl = ImagenPlaceholder,
         });
 
         AgregarSiFalta(new Pozo
@@ -75,7 +84,7 @@ public static class DbSeeder
             PrecioVentaEstimado = 3800000m,
             Estado = "Abierto",
             FechaCreacion = DateTime.UtcNow,
-            ImagenUrl = "https://picsum.photos/seed/fiat-cronos-2021/400/300",
+            ImagenUrl = ImagenPlaceholder,
         });
         AgregarSiFalta(new Pozo
         {
@@ -89,7 +98,7 @@ public static class DbSeeder
             PrecioVenta = 4600000m,
             FechaVenta = DateTime.UtcNow.AddDays(-5),
             FechaCreacion = DateTime.UtcNow.AddDays(-90),
-            ImagenUrl = "https://picsum.photos/seed/toyota-corolla-2018/400/300",
+            ImagenUrl = ImagenPlaceholder,
         });
         AgregarSiFalta(new Pozo
         {
@@ -100,7 +109,7 @@ public static class DbSeeder
             Estado = "Abierto",
             FechaCreacion = DateTime.UtcNow.AddDays(-2),
             PrecioVentaEstimado = 8200000m,
-            ImagenUrl = "https://picsum.photos/seed/ford-focus-2016/400/300",
+            ImagenUrl = ImagenPlaceholder,
         });
         AgregarSiFalta(new Pozo
         {
@@ -111,7 +120,7 @@ public static class DbSeeder
             Estado = "Abierto",
             FechaCreacion = DateTime.UtcNow.AddDays(-7),
             PrecioVentaEstimado = 6800000m,
-            ImagenUrl = "https://picsum.photos/seed/chevrolet-onix-2020/400/300",
+            ImagenUrl = ImagenPlaceholder,
         });
         AgregarSiFalta(new Pozo
         {
@@ -124,7 +133,7 @@ public static class DbSeeder
             PrecioCompra = 4300000m,
             FechaCompra = DateTime.UtcNow.AddDays(-8),
             PrecioVentaEstimado = 5400000m,
-            ImagenUrl = "https://picsum.photos/seed/renault-sandero-stepway-2017/400/300",
+            ImagenUrl = ImagenPlaceholder,
         });
         AgregarSiFalta(new Pozo
         {
@@ -139,7 +148,7 @@ public static class DbSeeder
             PrecioVenta = 7100000m,
             FechaVenta = DateTime.UtcNow.AddDays(-3),
             PrecioVentaEstimado = 7100000m,
-            ImagenUrl = "https://picsum.photos/seed/peugeot-208-2019/400/300",
+            ImagenUrl = ImagenPlaceholder,
         });
         AgregarSiFalta(new Pozo
         {
@@ -150,7 +159,7 @@ public static class DbSeeder
             Estado = "Abierto",
             FechaCreacion = DateTime.UtcNow.AddDays(-4),
             PrecioVentaEstimado = 10200000m,
-            ImagenUrl = "https://picsum.photos/seed/honda-civic-2020/400/300",
+            ImagenUrl = ImagenPlaceholder,
         });
         AgregarSiFalta(new Pozo
         {
@@ -161,7 +170,7 @@ public static class DbSeeder
             Estado = "Abierto",
             FechaCreacion = DateTime.UtcNow.AddDays(-1),
             PrecioVentaEstimado = 8100000m,
-            ImagenUrl = "https://picsum.photos/seed/vw-vento-2018/400/300",
+            ImagenUrl = ImagenPlaceholder,
         });
         AgregarSiFalta(new Pozo
         {
@@ -172,7 +181,7 @@ public static class DbSeeder
             Estado = "Abierto",
             FechaCreacion = DateTime.UtcNow.AddDays(-1),
             PrecioVentaEstimado = 11800000m,
-            ImagenUrl = "https://picsum.photos/seed/fiat-toro-2021/400/300",
+            ImagenUrl = ImagenPlaceholder,
         });
         AgregarSiFalta(new Pozo
         {
@@ -183,7 +192,7 @@ public static class DbSeeder
             Estado = "Abierto",
             FechaCreacion = DateTime.UtcNow.AddDays(-3),
             PrecioVentaEstimado = 5100000m,
-            ImagenUrl = "https://picsum.photos/seed/renault-kangoo-2020/400/300",
+            ImagenUrl = ImagenPlaceholder,
         });
         AgregarSiFalta(new Pozo
         {
@@ -194,7 +203,7 @@ public static class DbSeeder
             Estado = "Abierto",
             FechaCreacion = DateTime.UtcNow,
             PrecioVentaEstimado = 9300000m,
-            ImagenUrl = "https://picsum.photos/seed/jeep-renegade-2019/400/300",
+            ImagenUrl = ImagenPlaceholder,
         });
         AgregarSiFalta(new Pozo
         {
@@ -205,7 +214,7 @@ public static class DbSeeder
             Estado = "Abierto",
             FechaCreacion = DateTime.UtcNow.AddDays(-6),
             PrecioVentaEstimado = 10600000m,
-            ImagenUrl = "https://picsum.photos/seed/nissan-kicks-2021/400/300",
+            ImagenUrl = ImagenPlaceholder,
         });
         AgregarSiFalta(new Pozo
         {
@@ -216,7 +225,7 @@ public static class DbSeeder
             Estado = "Abierto",
             FechaCreacion = DateTime.UtcNow.AddDays(-2),
             PrecioVentaEstimado = 3900000m,
-            ImagenUrl = "https://picsum.photos/seed/ford-ka-2017/400/300",
+            ImagenUrl = ImagenPlaceholder,
         });
         AgregarSiFalta(new Pozo
         {
@@ -227,7 +236,7 @@ public static class DbSeeder
             Estado = "Abierto",
             FechaCreacion = DateTime.UtcNow.AddDays(-9),
             PrecioVentaEstimado = 14500000m,
-            ImagenUrl = "https://picsum.photos/seed/toyota-hilux-2019/400/300",
+            ImagenUrl = ImagenPlaceholder,
         });
         AgregarSiFalta(new Pozo
         {
@@ -238,7 +247,7 @@ public static class DbSeeder
             Estado = "Abierto",
             FechaCreacion = DateTime.UtcNow,
             PrecioVentaEstimado = 11700000m,
-            ImagenUrl = "https://picsum.photos/seed/chevrolet-tracker-2022/400/300",
+            ImagenUrl = ImagenPlaceholder,
         });
         AgregarSiFalta(new Pozo
         {
@@ -249,7 +258,7 @@ public static class DbSeeder
             Estado = "Abierto",
             FechaCreacion = DateTime.UtcNow.AddDays(-5),
             PrecioVentaEstimado = 7000000m,
-            ImagenUrl = "https://picsum.photos/seed/citroen-c4-cactus-2020/400/300",
+            ImagenUrl = ImagenPlaceholder,
         });
         AgregarSiFalta(new Pozo
         {
@@ -262,7 +271,7 @@ public static class DbSeeder
             PrecioCompra = 3450000m,
             FechaCompra = DateTime.UtcNow.AddDays(-4),
             PrecioVentaEstimado = 4300000m,
-            ImagenUrl = "https://picsum.photos/seed/peugeot-308-2015/400/300",
+            ImagenUrl = ImagenPlaceholder,
         });
         AgregarSiFalta(new Pozo
         {
@@ -275,7 +284,7 @@ public static class DbSeeder
             PrecioCompra = 3250000m,
             FechaCompra = DateTime.UtcNow.AddDays(-6),
             PrecioVentaEstimado = 4000000m,
-            ImagenUrl = "https://picsum.photos/seed/vw-suran-2016/400/300",
+            ImagenUrl = ImagenPlaceholder,
         });
         AgregarSiFalta(new Pozo
         {
@@ -290,7 +299,7 @@ public static class DbSeeder
             PrecioVenta = 5500000m,
             FechaVenta = DateTime.UtcNow.AddDays(-7),
             PrecioVentaEstimado = 5500000m,
-            ImagenUrl = "https://picsum.photos/seed/fiat-argo-2019/400/300",
+            ImagenUrl = ImagenPlaceholder,
         });
         AgregarSiFalta(new Pozo
         {
@@ -305,7 +314,7 @@ public static class DbSeeder
             PrecioVenta = 6200000m,
             FechaVenta = DateTime.UtcNow.AddDays(-2),
             PrecioVentaEstimado = 6200000m,
-            ImagenUrl = "https://picsum.photos/seed/renault-duster-2018/400/300",
+            ImagenUrl = ImagenPlaceholder,
         });
 
         // 10 pozos nuevos que se suman a los 21 anteriores (4 Abierto, 3
@@ -321,7 +330,7 @@ public static class DbSeeder
             Estado = "Abierto",
             FechaCreacion = DateTime.UtcNow.AddDays(-3),
             PrecioVentaEstimado = 6300000m,
-            ImagenUrl = "https://picsum.photos/seed/chevrolet-cruze-2017/400/300",
+            ImagenUrl = ImagenPlaceholder,
         });
         AgregarSiFalta(new Pozo
         {
@@ -332,7 +341,7 @@ public static class DbSeeder
             Estado = "Abierto",
             FechaCreacion = DateTime.UtcNow.AddDays(-1),
             PrecioVentaEstimado = 5600000m,
-            ImagenUrl = "https://picsum.photos/seed/ford-ecosport-2018/400/300",
+            ImagenUrl = ImagenPlaceholder,
         });
         AgregarSiFalta(new Pozo
         {
@@ -343,7 +352,7 @@ public static class DbSeeder
             Estado = "Abierto",
             FechaCreacion = DateTime.UtcNow.AddDays(-4),
             PrecioVentaEstimado = 4700000m,
-            ImagenUrl = "https://picsum.photos/seed/toyota-etios-2020/400/300",
+            ImagenUrl = ImagenPlaceholder,
         });
         AgregarSiFalta(new Pozo
         {
@@ -354,7 +363,7 @@ public static class DbSeeder
             Estado = "Abierto",
             FechaCreacion = DateTime.UtcNow,
             PrecioVentaEstimado = 8300000m,
-            ImagenUrl = "https://picsum.photos/seed/vw-polo-2022/400/300",
+            ImagenUrl = ImagenPlaceholder,
         });
         AgregarSiFalta(new Pozo
         {
@@ -367,7 +376,7 @@ public static class DbSeeder
             PrecioCompra = 7800000m,
             FechaCompra = DateTime.UtcNow.AddDays(-9),
             PrecioVentaEstimado = 9500000m,
-            ImagenUrl = "https://picsum.photos/seed/peugeot-3008-2019/400/300",
+            ImagenUrl = ImagenPlaceholder,
         });
         AgregarSiFalta(new Pozo
         {
@@ -380,7 +389,7 @@ public static class DbSeeder
             PrecioCompra = 4250000m,
             FechaCompra = DateTime.UtcNow.AddDays(-5),
             PrecioVentaEstimado = 5200000m,
-            ImagenUrl = "https://picsum.photos/seed/nissan-versa-2021/400/300",
+            ImagenUrl = ImagenPlaceholder,
         });
         AgregarSiFalta(new Pozo
         {
@@ -393,7 +402,7 @@ public static class DbSeeder
             PrecioCompra = 3150000m,
             FechaCompra = DateTime.UtcNow.AddDays(-3),
             PrecioVentaEstimado = 3900000m,
-            ImagenUrl = "https://picsum.photos/seed/citroen-c3-2018/400/300",
+            ImagenUrl = ImagenPlaceholder,
         });
         AgregarSiFalta(new Pozo
         {
@@ -408,7 +417,7 @@ public static class DbSeeder
             PrecioVenta = 8800000m,
             FechaVenta = DateTime.UtcNow.AddDays(-6),
             PrecioVentaEstimado = 8800000m,
-            ImagenUrl = "https://picsum.photos/seed/honda-hrv-2020/400/300",
+            ImagenUrl = ImagenPlaceholder,
         });
         AgregarSiFalta(new Pozo
         {
@@ -423,7 +432,7 @@ public static class DbSeeder
             PrecioVenta = 7400000m,
             FechaVenta = DateTime.UtcNow.AddDays(-8),
             PrecioVentaEstimado = 7400000m,
-            ImagenUrl = "https://picsum.photos/seed/jeep-compass-2018/400/300",
+            ImagenUrl = ImagenPlaceholder,
         });
         AgregarSiFalta(new Pozo
         {
@@ -438,7 +447,7 @@ public static class DbSeeder
             PrecioVenta = 3400000m,
             FechaVenta = DateTime.UtcNow.AddDays(-4),
             PrecioVentaEstimado = 3400000m,
-            ImagenUrl = "https://picsum.photos/seed/renault-logan-2016/400/300",
+            ImagenUrl = ImagenPlaceholder,
         });
 
         if (nuevos.Count > 0)
