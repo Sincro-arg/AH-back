@@ -74,10 +74,10 @@ public class DbSeederTests
 
         DbSeeder.SeedPozos(db);
 
-        Assert.Equal(21, db.Pozos.Count());
-        Assert.Equal(13, db.Pozos.Count(p => p.Estado == "Abierto"));
-        Assert.Equal(4, db.Pozos.Count(p => p.Estado == "Comprado"));
-        Assert.Equal(4, db.Pozos.Count(p => p.Estado == "Vendido"));
+        Assert.Equal(31, db.Pozos.Count());
+        Assert.Equal(17, db.Pozos.Count(p => p.Estado == "Abierto"));
+        Assert.Equal(7, db.Pozos.Count(p => p.Estado == "Comprado"));
+        Assert.Equal(7, db.Pozos.Count(p => p.Estado == "Vendido"));
     }
 
     [Fact]
@@ -133,7 +133,63 @@ public class DbSeederTests
         DbSeeder.SeedPozos(db);
         DbSeeder.SeedPozos(db);
 
-        Assert.Equal(21, db.Pozos.Count());
+        Assert.Equal(31, db.Pozos.Count());
+    }
+
+    [Fact]
+    public void SeedPozos_EsAditiva_CompletaLosQueFaltanSinDuplicarLosQueYaEstaban()
+    {
+        var db = BuildDb();
+
+        // Simula una corrida anterior con la lista vieja mas corta: ya habia
+        // dos de los pozos de ejemplo cargados (uno con exactamente los
+        // mismos datos que carga SeedPozos, otro con datos propios, como si
+        // lo hubiera tocado un usuario), pero todavia no existia el resto de
+        // la lista actual.
+        db.Pozos.AddRange(
+            new Pozo
+            {
+                Titulo = "VW Gol Trend 2019",
+                AutoDescripcion = "VW Gol Trend 2019, 62.000 km, nafta, unico dueño.",
+                MontoObjetivo = 2500000m,
+                MontoRecaudado = 2500000m,
+                Estado = "Comprado",
+                PrecioCompra = 2450000m,
+                FechaCompra = DateTime.UtcNow.AddDays(-10),
+                FechaCreacion = DateTime.UtcNow.AddDays(-30),
+                ImagenUrl = "https://cdn.example.com/pozos/vw-gol-trend-2019.jpg",
+            },
+            new Pozo
+            {
+                Titulo = "Fiat Cronos 2021",
+                AutoDescripcion = "Descripcion vieja, cargada por una corrida anterior.",
+                MontoObjetivo = 3000000m,
+                MontoRecaudado = 500000m,
+                Estado = "Abierto",
+                FechaCreacion = DateTime.UtcNow.AddDays(-100),
+                ImagenUrl = "https://cdn.example.com/pozos/fiat-cronos-2021-viejo.jpg",
+            }
+        );
+        db.SaveChanges();
+
+        var pozoVwGol = DbSeeder.SeedPozos(db);
+
+        Assert.Equal(31, db.Pozos.Count());
+        Assert.Equal(1, db.Pozos.Count(p => p.Titulo == "VW Gol Trend 2019"));
+        Assert.Equal(1, db.Pozos.Count(p => p.Titulo == "Fiat Cronos 2021"));
+
+        // El que ya estaba no se toco ni se reemplazo.
+        var fiatCronos = db.Pozos.Single(p => p.Titulo == "Fiat Cronos 2021");
+        Assert.Equal("Descripcion vieja, cargada por una corrida anterior.", fiatCronos.AutoDescripcion);
+        Assert.Equal(500000m, fiatCronos.MontoRecaudado);
+
+        // Un pozo que faltaba se completo.
+        Assert.Equal(1, db.Pozos.Count(p => p.Titulo == "Toyota Hilux 2019"));
+        // Uno de los 10 nuevos tambien se completo.
+        Assert.Equal(1, db.Pozos.Count(p => p.Titulo == "Renault Logan 2016"));
+
+        Assert.NotNull(pozoVwGol);
+        Assert.Equal("VW Gol Trend 2019", pozoVwGol!.Titulo);
     }
 
     [Fact]
