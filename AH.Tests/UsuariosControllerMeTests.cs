@@ -412,6 +412,30 @@ public class UsuariosControllerMeTests
     }
 
     [Fact]
+    public async Task GetMisInversiones_ExcluyeInversionesEnPozosDeDatoDePrueba()
+    {
+        var (ctrl, db) = Build();
+        var usuario = SeedUsuario(db, "a@example.com");
+
+        var pozoReal = new Pozo { Titulo = "Fiat Cronos", AutoDescripcion = "desc", MontoObjetivo = 100000m, MontoRecaudado = 30000m, Estado = "Abierto" };
+        var pozoE2E = new Pozo { Titulo = "Pozo E2E abc123", AutoDescripcion = "desc", MontoObjetivo = 100000m, MontoRecaudado = 30000m, Estado = "Abierto", EsDatoDePrueba = true };
+        db.Pozos.AddRange(pozoReal, pozoE2E);
+        db.SaveChanges();
+
+        db.Inversiones.Add(new Inversion { PozoId = pozoReal.Id, UsuarioId = usuario.Id, Monto = 30000m });
+        db.Inversiones.Add(new Inversion { PozoId = pozoE2E.Id, UsuarioId = usuario.Id, Monto = 30000m });
+        db.SaveChanges();
+
+        AutenticarComo(ctrl, usuario.Id);
+        var res = await ctrl.GetMisInversiones();
+
+        var ok = Assert.IsType<OkObjectResult>(res);
+        var lista = ((System.Collections.IEnumerable)ok.Value!).Cast<object>().ToList();
+        var item = Assert.Single(lista);
+        Assert.Equal("Fiat Cronos", GetProp(item, "tituloPozo"));
+    }
+
+    [Fact]
     public async Task GetMisInversiones_SinToken_Devuelve401()
     {
         var (ctrl, _) = Build();

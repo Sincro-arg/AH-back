@@ -129,6 +129,72 @@ public static class DbSeeder
                 FechaVenta = DateTime.UtcNow.AddDays(-3),
                 PrecioVentaEstimado = 7100000m,
                 ImagenUrl = "https://cdn.example.com/pozos/peugeot-208-2019.jpg",
+            },
+            new Pozo
+            {
+                Titulo = "Honda Civic 2020",
+                AutoDescripcion = "Honda Civic 2020, 1.5 turbo nafta, 52.000 km, full, unico dueño, ubicado en CABA.",
+                MontoObjetivo = 8500000m,
+                MontoRecaudado = 3400000m,
+                Estado = "Abierto",
+                FechaCreacion = DateTime.UtcNow.AddDays(-4),
+                PrecioVentaEstimado = 10200000m,
+                ImagenUrl = "https://cdn.example.com/pozos/honda-civic-2020.jpg",
+            },
+            new Pozo
+            {
+                Titulo = "Volkswagen Vento 2018",
+                AutoDescripcion = "Volkswagen Vento 2018, 2.0 tdi diesel, 90.000 km, service oficial, ubicado en Rosario, Santa Fe.",
+                MontoObjetivo = 6800000m,
+                MontoRecaudado = 1500000m,
+                Estado = "Abierto",
+                FechaCreacion = DateTime.UtcNow.AddDays(-1),
+                PrecioVentaEstimado = 8100000m,
+                ImagenUrl = "https://cdn.example.com/pozos/vw-vento-2018.jpg",
+            },
+            new Pozo
+            {
+                Titulo = "Fiat Toro 2021",
+                AutoDescripcion = "Fiat Toro 2021, 2.0 diesel 4x4, 40.000 km, unico dueño, ubicado en Cordoba capital.",
+                MontoObjetivo = 9500000m,
+                MontoRecaudado = 0m,
+                Estado = "Abierto",
+                FechaCreacion = DateTime.UtcNow.AddDays(-1),
+                PrecioVentaEstimado = 11800000m,
+                ImagenUrl = "https://cdn.example.com/pozos/fiat-toro-2021.jpg",
+            },
+            new Pozo
+            {
+                Titulo = "Renault Kangoo 2020",
+                AutoDescripcion = "Renault Kangoo 2020, 1.6 nafta, 55.000 km, uso comercial, ubicado en Zarate, Buenos Aires.",
+                MontoObjetivo = 4200000m,
+                MontoRecaudado = 900000m,
+                Estado = "Abierto",
+                FechaCreacion = DateTime.UtcNow.AddDays(-3),
+                PrecioVentaEstimado = 5100000m,
+                ImagenUrl = "https://cdn.example.com/pozos/renault-kangoo-2020.jpg",
+            },
+            new Pozo
+            {
+                Titulo = "Jeep Renegade 2019",
+                AutoDescripcion = "Jeep Renegade 2019, 1.8 nafta 4x2, 68.000 km, unico dueño, ubicado en Neuquen capital.",
+                MontoObjetivo = 7800000m,
+                MontoRecaudado = 0m,
+                Estado = "Abierto",
+                FechaCreacion = DateTime.UtcNow,
+                PrecioVentaEstimado = 9300000m,
+                ImagenUrl = "https://cdn.example.com/pozos/jeep-renegade-2019.jpg",
+            },
+            new Pozo
+            {
+                Titulo = "Nissan Kicks 2021",
+                AutoDescripcion = "Nissan Kicks 2021, 1.6 nafta CVT, 30.000 km, full, unico dueño, ubicado en Salta capital.",
+                MontoObjetivo = 8900000m,
+                MontoRecaudado = 2500000m,
+                Estado = "Abierto",
+                FechaCreacion = DateTime.UtcNow.AddDays(-6),
+                PrecioVentaEstimado = 10600000m,
+                ImagenUrl = "https://cdn.example.com/pozos/nissan-kicks-2021.jpg",
             }
         );
         db.SaveChanges();

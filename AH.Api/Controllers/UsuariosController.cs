@@ -209,7 +209,7 @@ public class UsuariosController : ControllerBase
         var inversiones = await _context.Inversiones
             .Where(i => i.UsuarioId == id)
             .OrderByDescending(i => i.Fecha)
-            .Join(_context.Pozos, i => i.PozoId, p => p.Id, (i, p) => new { i, p })
+            .Join(_context.Pozos.Where(p => !p.EsDatoDePrueba), i => i.PozoId, p => p.Id, (i, p) => new { i, p })
             .Select(x => new
             {
                 id = x.i.Id.ToString(),
