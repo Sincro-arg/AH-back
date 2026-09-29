@@ -9,14 +9,14 @@ public static class DbSeeder
     public const string AdminEmail = "admin@cuentas.com";
     public const string AdminPassword = "Admin123!";
 
-    // Placeholder de imagen para todos los pozos de ejemplo: la misma
-    // ilustracion SVG de auto naranja que ya usa la home
-    // (AH-front/src/app/components/home/home.html) y que tarjeta-pozo usa
-    // como fallback cuando no hay ImagenUrl o la URL cargada esta rota. Se
-    // sirve como ruta relativa del propio front (AH-front/public/imagenes),
-    // asi que resuelve bien en cualquier entorno sin depender de un dominio
-    // externo como picsum.photos, que devolvia fotos sin relacion con autos.
-    private const string ImagenPlaceholder = "/imagenes/auto-default.svg";
+    // Placeholder de imagen para todos los pozos de ejemplo: la misma foto
+    // de auto que ya usa la home (AH-front/src/app/components/home/home.html)
+    // y que tarjeta-pozo usa como fallback cuando no hay ImagenUrl o la URL
+    // cargada esta rota. Se sirve como ruta relativa del propio front
+    // (AH-front/public/imagenes), asi que resuelve bien en cualquier entorno
+    // sin depender de un dominio externo como picsum.photos, que devolvia
+    // fotos sin relacion con autos.
+    private const string ImagenPlaceholder = "/imagenes/auto.jpg";
 
     public static void SeedAdminUsuario(AppDbContext db)
     {
